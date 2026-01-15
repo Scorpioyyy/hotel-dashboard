@@ -1,0 +1,85 @@
+{
+  "categories": [
+    {
+      "name": "设施类",
+      "subcategories": [
+        {
+          "name": "房间设施",
+          "subcategories": ["床", "卫浴", "空调", "wifi", "电视", "冰箱", "热水"]
+        },
+        {
+          "name": "公共设施",
+          "subcategories": ["泳池", "健身房", "停车场", "会议室", "商务中心"]
+        },
+        {
+          "name": "餐饮设施",
+          "subcategories": ["早餐", "餐厅", "酒吧", "客房送餐"]
+        }
+      ]
+    },
+    {
+      "name": "服务类",
+      "subcategories": [
+        {
+          "name": "前台服务",
+          "subcategories": ["入住", "退房", "礼宾", "咨询", "态度"]
+        },
+        {
+          "name": "客房服务",
+          "subcategories": ["打扫", "整理", "送物", "维修"]
+        },
+        {
+          "name": "退房/入住效率",
+          "subcategories": ["速度", "流程", "等待时间"]
+        }
+      ]
+    },
+    {
+      "name": "位置类",
+      "subcategories": [
+        {
+          "name": "交通便利性",
+          "subcategories": ["地铁", "公交", "机场", "火车站", "打车"]
+        },
+        {
+          "name": "周边配套",
+          "subcategories": ["商场", "餐饮", "景点", "医院", "银行"]
+        },
+        {
+          "name": "景观/朝向",
+          "subcategories": ["江景", "园景", "城景", "无窗"]
+        }
+      ]
+    },
+    {
+      "name": "价格类",
+      "subcategories": [
+        {
+          "name": "性价比",
+          "subcategories": ["值得", "划算", "超值", "合理"]
+        },
+        {
+          "name": "价格合理性",
+          "subcategories": ["贵", "便宜", "优惠", "折扣"]
+        }
+      ]
+    },
+    {
+      "name": "体验类",
+      "subcategories": [
+        {
+          "name": "整体满意度",
+          "subcategories": ["满意", "推荐", "舒适", "愉快"]
+        },
+        {
+          "name": "安静程度",
+          "subcategories": ["安静", "吵闹", "隔音"]
+        },
+        {
+          "name": "卫生状况",
+          "subcategories": ["干净", "卫生", "整洁", "清洁"]
+        }
+      ]
+    }
+  ]
+}

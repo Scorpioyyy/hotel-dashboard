@@ -1,0 +1,570 @@
+openapi: 3.0.3
+info:
+  title: 广州花园酒店评论数据分析系统 API
+  description: 提供评论数据查询、统计分析和智能问答功能
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Next.js API Routes
+
+paths:
+  /stats:
+    get:
+      summary: 获取看板统计数据
+      description: 返回所有维度的统计数据，支持筛选条件
+      operationId: getStats
+      parameters:
+        - $ref: '#/components/parameters/DateStart'
+        - $ref: '#/components/parameters/DateEnd'
+        - $ref: '#/components/parameters/Scores'
+        - $ref: '#/components/parameters/RoomTypes'
+        - $ref: '#/components/parameters/TravelTypes'
+        - $ref: '#/components/parameters/Categories'
+      responses:
+        '200':
+          description: 统计数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStats'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /comments:
+    get:
+      summary: 获取评论列表
+      description: 分页获取评论数据，支持多种筛选条件
+      operationId: getComments
+      parameters:
+        - $ref: '#/components/parameters/DateStart'
+        - $ref: '#/components/parameters/DateEnd'
+        - $ref: '#/components/parameters/Scores'
+        - $ref: '#/components/parameters/RoomTypes'
+        - $ref: '#/components/parameters/TravelTypes'
+        - $ref: '#/components/parameters/Categories'
+        - $ref: '#/components/parameters/MinQualityScore'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 评论列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /comments/{id}:
+    get:
+      summary: 获取单条评论详情
+      operationId: getCommentById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 评论 ID
+      responses:
+        '200':
+          description: 评论详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /qa:
+    post:
+      summary: 智能问答
+      description: 基于评论数据回答用户问题
+      operationId: askQuestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QARequest'
+      responses:
+        '200':
+          description: 问答结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QAResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /filters/options:
+    get:
+      summary: 获取筛选器选项
+      description: 返回所有可用的筛选选项（房型、旅行类型等）
+      operationId: getFilterOptions
+      responses:
+        '200':
+          description: 筛选选项
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilterOptions'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  parameters:
+    DateStart:
+      name: dateStart
+      in: query
+      schema:
+        type: string
+        format: date
+      description: 开始日期 (YYYY-MM-DD)
+
+    DateEnd:
+      name: dateEnd
+      in: query
+      schema:
+        type: string
+        format: date
+      description: 结束日期 (YYYY-MM-DD)
+
+    Scores:
+      name: scores
+      in: query
+      schema:
+        type: array
+        items:
+          type: integer
+          minimum: 1
+          maximum: 5
+      style: form
+      explode: false
+      description: 评分筛选 (1-5)
+
+    RoomTypes:
+      name: roomTypes
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: false
+      description: 房型筛选（room_type_fuzzy）
+
+    TravelTypes:
+      name: travelTypes
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: false
+      description: 旅行类型筛选
+
+    Categories:
+      name: categories
+      in: query
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/StandardCategory'
+      style: form
+      explode: false
+      description: 评论类别筛选（14 个标准小类）
+
+    MinQualityScore:
+      name: minQualityScore
+      in: query
+      schema:
+        type: integer
+        minimum: 5
+        maximum: 10
+        default: 5
+      description: 最低质量分（用于高质量评论筛选，默认 8）
+
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: 页码
+
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: 每页数量
+
+  schemas:
+    Comment:
+      type: object
+      required:
+        - _id
+        - comment
+        - score
+        - publish_date
+        - room_type
+        - travel_type
+        - review_count
+        - room_type_fuzzy
+        - quality_score
+      properties:
+        _id:
+          type: string
+          description: 评论唯一标识
+        comment:
+          type: string
+          description: 评论文本内容
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: 评论配图 URL 列表
+        score:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 酒店评分
+        useful_count:
+          type: integer
+          minimum: 0
+          description: 被点赞次数
+        publish_date:
+          type: string
+          format: date
+          description: 发布日期
+        room_type:
+          type: string
+          description: 具体房型名称
+        travel_type:
+          type: string
+          description: 旅行类型
+        review_count:
+          type: integer
+          description: 用户累计评论数
+        room_type_fuzzy:
+          type: string
+          description: 房型模糊分类
+        quality_score:
+          type: integer
+          minimum: 5
+          maximum: 10
+          description: 内容质量分
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandardCategory'
+          description: 评论类别（仅 14 个标准小类）
+
+    StandardCategory:
+      type: string
+      enum:
+        - 房间设施
+        - 公共设施
+        - 餐饮设施
+        - 前台服务
+        - 客房服务
+        - 退房/入住效率
+        - 交通便利性
+        - 周边配套
+        - 景观/朝向
+        - 性价比
+        - 价格合理性
+        - 整体满意度
+        - 安静程度
+        - 卫生状况
+
+    DashboardStats:
+      type: object
+      required:
+        - scoreDistribution
+        - timeTrend
+        - roomTypeStats
+        - travelTypeStats
+        - categoryStats
+        - qualityDistribution
+        - userActivityStats
+        - totalCount
+      properties:
+        scoreDistribution:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoreDistribution'
+        timeTrend:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeTrend'
+        roomTypeStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomTypeStats'
+        travelTypeStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelTypeStats'
+        categoryStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryStats'
+        qualityDistribution:
+          type: array
+          items:
+            $ref: '#/components/schemas/QualityDistribution'
+        userActivityStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserActivityStats'
+        totalCount:
+          type: integer
+          description: 符合筛选条件的评论总数
+
+    ScoreDistribution:
+      type: object
+      properties:
+        score:
+          type: integer
+        count:
+          type: integer
+        percentage:
+          type: number
+          format: float
+
+    TimeTrend:
+      type: object
+      properties:
+        date:
+          type: string
+          description: 年月 (YYYY-MM)
+        count:
+          type: integer
+        avgScore:
+          type: number
+          format: float
+
+    RoomTypeStats:
+      type: object
+      properties:
+        roomType:
+          type: string
+        roomTypeFuzzy:
+          type: string
+        count:
+          type: integer
+        avgScore:
+          type: number
+          format: float
+
+    TravelTypeStats:
+      type: object
+      properties:
+        travelType:
+          type: string
+        count:
+          type: integer
+        avgScore:
+          type: number
+          format: float
+
+    CategoryStats:
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/StandardCategory'
+        group:
+          type: string
+          enum: [设施类, 服务类, 位置类, 价格类, 体验类]
+        count:
+          type: integer
+        percentage:
+          type: number
+          format: float
+
+    QualityDistribution:
+      type: object
+      properties:
+        qualityScore:
+          type: integer
+        count:
+          type: integer
+        percentage:
+          type: number
+          format: float
+
+    UserActivityStats:
+      type: object
+      properties:
+        reviewCountRange:
+          type: string
+          description: 评论数量区间 (如 "1-5", "6-10", "11+")
+        count:
+          type: integer
+        percentage:
+          type: number
+          format: float
+
+    CommentListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    QARequest:
+      type: object
+      required:
+        - question
+      properties:
+        question:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: 用户问题
+
+    QAResponse:
+      type: object
+      required:
+        - answer
+        - references
+        - hasRelevantData
+      properties:
+        answer:
+          type: string
+          description: AI 生成的回答
+        references:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommentReference'
+          minItems: 0
+          maxItems: 5
+          description: 作为回答依据的评论（3-5 条）
+        hasRelevantData:
+          type: boolean
+          description: 是否找到相关评论数据
+
+    CommentReference:
+      type: object
+      properties:
+        _id:
+          type: string
+        comment:
+          type: string
+        score:
+          type: integer
+        publish_date:
+          type: string
+          format: date
+        room_type:
+          type: string
+        relevanceScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: 相关性评分
+
+    FilterOptions:
+      type: object
+      properties:
+        roomTypes:
+          type: array
+          items:
+            type: string
+          description: 可选房型列表（room_type_fuzzy 去重）
+        travelTypes:
+          type: array
+          items:
+            type: string
+          description: 可选旅行类型列表
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandardCategory'
+          description: 14 个标准小类
+        dateRange:
+          type: object
+          properties:
+            min:
+              type: string
+              format: date
+            max:
+              type: string
+              format: date
+          description: 数据日期范围
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: BAD_REQUEST
+            message: 请求参数无效
+
+    NotFound:
+      description: 资源未找到
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: NOT_FOUND
+            message: 评论不存在
+
+    ServerError:
+      description: 服务器内部错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: SERVER_ERROR
+            message: 服务器内部错误，请稍后重试

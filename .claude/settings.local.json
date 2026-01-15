@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__insforge__fetch-docs",
+      "mcp__insforge__get-backend-metadata",
+      "mcp__insforge__download-template",
+      "Bash(npm install)",
+      "Bash(test:*)",
+      "mcp__insforge__run-raw-sql",
+      "mcp__insforge__bulk-upsert",
+      "Bash(python3:*)",
+      "Bash(node -e:*)",
+      "Bash(node scripts/process-csv.js:*)",
+      "Bash(node scripts/import-data.js:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout /t 5)",
+      "Bash(npm ls:*)",
+      "Bash(dir /s \"C:\\\\Users\\\\22418\\\\Desktop\\\\Scorpio\\\\复旦\\\\课程\\\\大三下\\\\hotel-dashboard\\\\src\")"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "insforge"
+  ]
+}
