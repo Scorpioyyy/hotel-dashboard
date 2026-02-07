@@ -19,12 +19,16 @@ interface TravelTypeData {
 
 interface Props {
   data: TravelTypeData[];
+  onSliceClick?: (travelType: string) => void;
 }
 
-export function TravelTypeChart({ data }: Props) {
+export function TravelTypeChart({ data, onSliceClick }: Props) {
   const total = data.reduce((sum, d) => sum + d.count, 0);
 
-  const chartData = data.map(d => ({
+  // 按比例从高到低排序
+  const sortedData = [...data].sort((a, b) => b.count - a.count);
+
+  const chartData = sortedData.map(d => ({
     name: d.travelType || '未知',
     value: d.count,
     percent: ((d.count / total) * 100).toFixed(1)
@@ -43,10 +47,12 @@ export function TravelTypeChart({ data }: Props) {
               outerRadius={80}
               paddingAngle={2}
               dataKey="value"
-              startAngle={0}
-              endAngle={-360}
+              startAngle={-10}
+              endAngle={-370}
               label={({ name, percent }) => `${name} ${percent}%`}
               labelLine={{ stroke: '#9CA3AF', strokeWidth: 1 }}
+              cursor={onSliceClick ? 'pointer' : 'default'}
+              onClick={(data) => onSliceClick?.(data.name)}
             >
               {chartData.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={getChartColor(index + 5)} />
@@ -65,7 +71,19 @@ export function TravelTypeChart({ data }: Props) {
               layout="horizontal"
               verticalAlign="bottom"
               align="center"
-              formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
+              content={() => (
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
+                  {chartData.map((entry, index) => (
+                    <div key={entry.name} className="flex items-center gap-1.5">
+                      <div
+                        className="w-3 h-3 rounded-sm"
+                        style={{ backgroundColor: getChartColor(index + 5) }}
+                      />
+                      <span className="text-sm text-gray-600">{entry.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             />
           </PieChart>
         </ResponsiveContainer>

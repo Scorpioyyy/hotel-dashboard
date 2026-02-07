@@ -3,3 +3,4 @@ export * from './Card';
 export * from './Loading';
 export * from './ErrorBoundary';
 export * from './DateRangePicker';
+export * from './StarRating';

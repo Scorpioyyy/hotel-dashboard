@@ -17,7 +17,15 @@
       "Bash(npm run dev:*)",
       "Bash(timeout /t 5)",
       "Bash(npm ls:*)",
-      "Bash(dir /s \"C:\\\\Users\\\\22418\\\\Desktop\\\\Scorpio\\\\复旦\\\\课程\\\\大三下\\\\hotel-dashboard\\\\src\")"
+      "Bash(dir /s \"C:\\\\Users\\\\22418\\\\Desktop\\\\Scorpio\\\\复旦\\\\课程\\\\大三下\\\\hotel-dashboard\\\\src\")",
+      "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\22418\\\\Desktop\\\\Scorpio\\\\复旦\\\\课程\\\\大三下\\\\hotel-dashboard\\\\public\\\\enriched_comments.csv'' -TotalCount 20\")",
+      "Bash(node scripts/upload-data.js:*)",
+      "Bash(node scripts/generate-sql.js:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(node scripts/upload-to-insforge.js:*)",
+      "Bash(node scripts/test-insert.js:*)",
+      "Bash(node scripts/upload-with-sdk.mjs:*)",
+      "Bash(del \"C:\\\\Users\\\\22418\\\\Desktop\\\\Scorpio\\\\复旦\\\\课程\\\\大三下\\\\hotel-dashboard\\\\temp_batch0.sql\")"
     ]
   },
   "enabledMcpjsonServers": [

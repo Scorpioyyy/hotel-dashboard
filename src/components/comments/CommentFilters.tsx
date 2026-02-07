@@ -2,18 +2,16 @@
 'use client';
 
 import { Card, DateRangePicker } from '@/components/ui';
-import { STANDARD_CATEGORIES, CATEGORY_GROUPS } from '@/lib/constants';
+import { CATEGORY_GROUPS, ROOM_TYPES, TRAVEL_TYPES } from '@/lib/constants';
 import { CommentFilters as Filters } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface Props {
   filters: Filters;
   onChange: (filters: Filters) => void;
-  roomTypes: string[];
-  travelTypes: string[];
 }
 
-export function CommentFilters({ filters, onChange, roomTypes, travelTypes }: Props) {
+export function CommentFilters({ filters, onChange }: Props) {
   const updateFilter = <K extends keyof Filters>(key: K, value: Filters[K]) => {
     onChange({ ...filters, [key]: value });
   };
@@ -27,23 +25,11 @@ export function CommentFilters({ filters, onChange, roomTypes, travelTypes }: Pr
   };
 
   const handleScoreToggle = (score: number) => {
-    const currentMin = filters.scoreRange?.min || 1;
-    const currentMax = filters.scoreRange?.max || 5;
-
-    if (score === currentMin && score === currentMax) {
-      // 取消选择
-      updateFilter('scoreRange', undefined);
-    } else if (!filters.scoreRange) {
-      // 首次选择
-      updateFilter('scoreRange', { min: score, max: score });
-    } else if (score < currentMin) {
-      updateFilter('scoreRange', { min: score, max: currentMax });
-    } else if (score > currentMax) {
-      updateFilter('scoreRange', { min: currentMin, max: score });
-    } else {
-      // 点击中间的分数，设置为单选
-      updateFilter('scoreRange', { min: score, max: score });
-    }
+    const current = filters.scores || [];
+    const newScores = current.includes(score)
+      ? current.filter((s) => s !== score)
+      : [...current, score];
+    updateFilter('scores', newScores.length > 0 ? newScores : undefined);
   };
 
   const handleRoomTypeToggle = (roomType: string) => {
@@ -67,9 +53,6 @@ export function CommentFilters({ filters, onChange, roomTypes, travelTypes }: Pr
   };
 
   const hasFilters = Object.keys(filters).length > 0;
-
-  // 过滤掉"其他"
-  const filteredTravelTypes = travelTypes.filter(t => t !== '其他');
 
   return (
     <Card title="筛选条件">
@@ -97,26 +80,20 @@ export function CommentFilters({ filters, onChange, roomTypes, travelTypes }: Pr
         <div>
           <h4 className="text-sm font-medium text-gray-700 mb-2">评分</h4>
           <div className="flex gap-2">
-            {[5, 4, 3, 2, 1].map((score) => {
-              const isSelected =
-                filters.scoreRange &&
-                score >= filters.scoreRange.min &&
-                score <= filters.scoreRange.max;
-              return (
-                <button
-                  key={score}
-                  onClick={() => handleScoreToggle(score)}
-                  className={cn(
-                    'flex-1 py-2 text-sm rounded-lg transition-colors',
-                    isSelected
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  )}
-                >
-                  {score}分
-                </button>
-              );
-            })}
+            {[5, 4, 3, 2, 1].map((score) => (
+              <button
+                key={score}
+                onClick={() => handleScoreToggle(score)}
+                className={cn(
+                  'flex-1 py-2 text-sm rounded-lg transition-colors',
+                  filters.scores?.includes(score)
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                )}
+              >
+                {score}星
+              </button>
+            ))}
           </div>
         </div>
 
@@ -124,7 +101,7 @@ export function CommentFilters({ filters, onChange, roomTypes, travelTypes }: Pr
         <div>
           <h4 className="text-sm font-medium text-gray-700 mb-2">房型</h4>
           <div className="flex flex-wrap gap-2">
-            {roomTypes.map((roomType) => (
+            {ROOM_TYPES.map((roomType) => (
               <button
                 key={roomType}
                 onClick={() => handleRoomTypeToggle(roomType)}
@@ -135,7 +112,7 @@ export function CommentFilters({ filters, onChange, roomTypes, travelTypes }: Pr
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 )}
               >
-                {roomType || '未知'}
+                {roomType}
               </button>
             ))}
           </div>
@@ -145,7 +122,7 @@ export function CommentFilters({ filters, onChange, roomTypes, travelTypes }: Pr
         <div>
           <h4 className="text-sm font-medium text-gray-700 mb-2">出行类型</h4>
           <div className="flex flex-wrap gap-2">
-            {filteredTravelTypes.map((travelType) => (
+            {TRAVEL_TYPES.map((travelType) => (
               <button
                 key={travelType}
                 onClick={() => handleTravelTypeToggle(travelType)}
@@ -156,7 +133,7 @@ export function CommentFilters({ filters, onChange, roomTypes, travelTypes }: Pr
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 )}
               >
-                {travelType || '未知'}
+                {travelType}
               </button>
             ))}
           </div>

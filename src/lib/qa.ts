@@ -66,19 +66,23 @@ ${referencesText}
 7. 可以使用 Markdown 格式组织回答`;
 }
 
+// 检索评论数量（超参数）
+const QA_RETRIEVAL_LIMIT = 10;
+
 // 获取相关评论（供外部调用）
 export async function getReferencesForQuestion(question: string): Promise<Comment[]> {
   const categories = extractCategories(question);
   return await getHighQualityComments(
     categories.length > 0 ? categories : undefined,
-    5
+    QA_RETRIEVAL_LIMIT
   );
 }
 
 // 流式问答服务
 export async function* askQuestionStream(
   question: string,
-  references: Comment[]
+  references: Comment[],
+  signal?: AbortSignal
 ): AsyncGenerator<string, void, unknown> {
   if (references.length === 0) {
     yield '抱歉，暂时没有找到相关的评论信息来回答您的问题。请尝试换一种方式提问。';
@@ -100,12 +104,20 @@ export async function* askQuestionStream(
     });
 
     for await (const chunk of stream) {
+      // 检查是否已被终止
+      if (signal?.aborted) {
+        return;
+      }
       const content = chunk.choices[0]?.delta?.content;
       if (content) {
         yield content;
       }
     }
   } catch (error) {
+    // 如果是终止导致的错误，不输出错误信息
+    if (signal?.aborted) {
+      return;
+    }
     console.error('AI 调用失败:', error);
     yield '抱歉，生成回答时出现问题，请稍后重试。';
   }
@@ -116,7 +128,7 @@ export async function askQuestion(question: string): Promise<QAResponse> {
   const categories = extractCategories(question);
   const references = await getHighQualityComments(
     categories.length > 0 ? categories : undefined,
-    5
+    QA_RETRIEVAL_LIMIT
   );
 
   if (references.length === 0) {

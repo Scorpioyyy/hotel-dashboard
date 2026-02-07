@@ -20,13 +20,20 @@ interface ScoreData {
 
 interface Props {
   data: ScoreData[];
+  onBarClick?: (score: number) => void;
+}
+
+interface ChartDataItem {
+  name: string;
+  value: number;
+  score: number;
 }
 
 const COLORS = ['#EF4444', '#F97316', '#F59E0B', '#84CC16', '#22C55E'];
 
-export function ScoreDistributionChart({ data }: Props) {
+export function ScoreDistributionChart({ data, onBarClick }: Props) {
   const chartData = data.map(d => ({
-    name: `${d.score}分`,
+    name: `${d.score}星`,
     value: d.count,
     score: d.score
   }));
@@ -56,7 +63,12 @@ export function ScoreDistributionChart({ data }: Props) {
               }}
               formatter={(value) => [`${value} 条`, '评论数']}
             />
-            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+            <Bar
+              dataKey="value"
+              radius={[4, 4, 0, 0]}
+              cursor={onBarClick ? 'pointer' : 'default'}
+              onClick={(data) => onBarClick?.((data as unknown as ChartDataItem).score)}
+            >
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[entry.score - 1]} />
               ))}

@@ -32,16 +32,13 @@ export interface CommentFilters {
     start: string;
     end: string;
   };
-  scoreRange?: {
-    min: number;
-    max: number;
-  };
+  scores?: number[];  // 选中的评分等级（1-5）
   roomTypes?: string[];
   travelTypes?: string[];
   categories?: StandardCategory[];
   qualityScoreMin?: number;
   keyword?: string;
-  sortBy?: 'publish_date' | 'score' | 'quality_score' | 'useful_count';
+  sortBy?: 'publish_date' | 'score' | 'quality_score' | 'useful_count' | 'review_count';
   sortOrder?: 'asc' | 'desc';
 }
 

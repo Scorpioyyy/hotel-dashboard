@@ -1,165 +1,238 @@
-// app/page.tsx - 数据可视化看板主页
+// app/page.tsx - 评论浏览页面（首页）
 'use client';
 
-import { useEffect, useState } from 'react';
-import { StatCard, ChartSkeleton, StatCardSkeleton, ErrorDisplay } from '@/components/ui';
-import {
-  ScoreDistributionChart,
-  MonthlyTrendChart,
-  CategoryDistributionChart,
-  RoomTypeChart,
-  TravelTypeChart
-} from '@/components/charts';
-import { getStats } from '@/lib/api';
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { CommentCard, CommentFilters, Pagination } from '@/components/comments';
+import { ListSkeleton, ErrorDisplay, EmptyState } from '@/components/ui';
+import { getComments } from '@/lib/api';
+import { Comment, CommentFilters as Filters, StandardCategory } from '@/types';
 import { formatNumber } from '@/lib/utils';
 
-interface DashboardStats {
-  total: number;
-  avgScore: number;
-  highQualityCount: number;
-  scoreDistribution: { score: number; count: number }[];
-  monthlyTrend: { month: string; count: number; avgScore: number }[];
-  categoryDistribution: { category: string; count: number }[];
-  roomTypeDistribution: { roomType: string; count: number }[];
-  travelTypeDistribution: { travelType: string; count: number }[];
-}
-
-export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+function CommentsPageContent() {
+  const searchParams = useSearchParams();
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [keyword, setKeyword] = useState('');
+
+  // 从 URL 参数初始化过滤条件
+  const getInitialFilters = useCallback((): Filters => {
+    const initialFilters: Filters = {};
+
+    // 日期范围
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    if (startDate || endDate) {
+      initialFilters.dateRange = {
+        start: startDate || '',
+        end: endDate || '',
+      };
+    }
+
+    // 评分（支持单个或多个，用逗号分隔）
+    const scoresParam = searchParams.get('scores');
+    if (scoresParam) {
+      initialFilters.scores = scoresParam.split(',').map(Number);
+    }
+
+    // 类别
+    const category = searchParams.get('category');
+    if (category) {
+      initialFilters.categories = [category as StandardCategory];
+    }
+
+    // 房型
+    const roomType = searchParams.get('roomType');
+    if (roomType) {
+      initialFilters.roomTypes = [roomType];
+    }
+
+    // 出行类型
+    const travelType = searchParams.get('travelType');
+    if (travelType) {
+      initialFilters.travelTypes = [travelType];
+    }
+
+    return initialFilters;
+  }, [searchParams]);
+
+  const [filters, setFilters] = useState<Filters>(() => getInitialFilters());
+
+  // 当 URL 参数变化时更新过滤条件
+  useEffect(() => {
+    setFilters(getInitialFilters());
+    setPage(1);
+  }, [getInitialFilters]);
+
+  // 加载评论
+  const loadComments = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await getComments(filters, page, 10);
+      setComments(result.data);
+      setTotal(result.total);
+      setTotalPages(result.totalPages);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '加载评论失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, page]);
 
   useEffect(() => {
-    async function loadStats() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getStats();
-        setStats(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '加载数据失败');
-      } finally {
-        setLoading(false);
+    loadComments();
+  }, [loadComments]);
+
+  // 防抖搜索
+  const debouncedSearchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleKeywordChange = (value: string) => {
+    setKeyword(value);
+    if (debouncedSearchRef.current) {
+      clearTimeout(debouncedSearchRef.current);
+    }
+    debouncedSearchRef.current = setTimeout(() => {
+      setFilters((prev) => ({
+        ...prev,
+        keyword: value || undefined
+      }));
+      setPage(1);
+    }, 500);
+  };
+
+  const handleFiltersChange = (newFilters: Filters) => {
+    // 如果清空了所有筛选条件，同时清空搜索框
+    if (Object.keys(newFilters).length === 0) {
+      setKeyword('');
+      if (debouncedSearchRef.current) {
+        clearTimeout(debouncedSearchRef.current);
       }
     }
-    loadStats();
-  }, []);
+    setFilters(newFilters);
+    setPage(1);
+  };
 
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ErrorDisplay
-          title="数据加载失败"
-          message={error}
-          onRetry={() => window.location.reload()}
-        />
-      </div>
-    );
-  }
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    // 滚动 main 元素到顶部（因为 body 设置了 overflow-hidden）
+    const mainElement = document.querySelector('main');
+    if (mainElement) {
+      mainElement.scrollTop = 0;
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* 页面标题 */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">数据概览</h1>
+        <h1 className="text-2xl font-bold text-gray-900">评论浏览</h1>
         <p className="mt-1 text-sm text-gray-500">
-          广州花园酒店评论数据分析看板
+          浏览和筛选酒店评论，共 {formatNumber(total)} 条评论
         </p>
       </div>
 
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {loading ? (
-          <>
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </>
-        ) : stats ? (
-          <>
-            <StatCard
-              title="评论总数"
-              value={formatNumber(stats.total)}
-              subtitle="全部评论"
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                </svg>
-              }
-            />
-            <StatCard
-              title="平均评分"
-              value={stats.avgScore.toFixed(2)}
-              subtitle="满分 5 分"
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-              }
-            />
-            <StatCard
-              title="高质量评论"
-              value={formatNumber(stats.highQualityCount)}
-              subtitle={`占比 ${((stats.highQualityCount / stats.total) * 100).toFixed(1)}%`}
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
-              }
-            />
-            <StatCard
-              title="话题类别"
-              value={stats.categoryDistribution.length}
-              subtitle="个标签分类"
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-              }
-            />
-          </>
-        ) : null}
-      </div>
+      <div className="flex gap-8">
+        {/* 左侧筛选栏 */}
+        <div className="w-72 flex-shrink-0 hidden lg:block">
+          <CommentFilters
+            filters={filters}
+            onChange={handleFiltersChange}
+          />
+        </div>
 
-      {/* 图表区域 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {loading ? (
-          <>
-            <ChartSkeleton />
-            <ChartSkeleton />
-          </>
-        ) : stats ? (
-          <>
-            <ScoreDistributionChart data={stats.scoreDistribution} />
-            <MonthlyTrendChart data={stats.monthlyTrend} />
-          </>
-        ) : null}
-      </div>
+        {/* 右侧评论列表 */}
+        <div className="flex-1 min-w-0">
+          {/* 搜索和排序 */}
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            {/* 搜索框 */}
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={keyword}
+                onChange={(e) => handleKeywordChange(e.target.value)}
+                placeholder="搜索评论内容..."
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
 
-      {/* 类别分布 - 全宽 */}
-      <div className="mb-8">
-        {loading ? (
-          <ChartSkeleton height={400} />
-        ) : stats ? (
-          <CategoryDistributionChart data={stats.categoryDistribution} />
-        ) : null}
-      </div>
+            {/* 排序选择 */}
+            <select
+              value={`${filters.sortBy || 'publish_date'}-${filters.sortOrder || 'desc'}`}
+              onChange={(e) => {
+                const [sortBy, sortOrder] = e.target.value.split('-') as [Filters['sortBy'], Filters['sortOrder']];
+                setFilters((prev) => ({ ...prev, sortBy, sortOrder }));
+                setPage(1); // 切换排序时重置到第一页
+              }}
+              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="publish_date-desc">最新发布</option>
+              <option value="publish_date-asc">最早发布</option>
+              <option value="score-desc">评分最高</option>
+              <option value="score-asc">评分最低</option>
+              <option value="quality_score-desc">质量最高</option>
+              <option value="useful_count-desc">点赞最多</option>
+              <option value="review_count-desc">回复最多</option>
+            </select>
+          </div>
 
-      {/* 房型和出行类型分布 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {loading ? (
-          <>
-            <ChartSkeleton />
-            <ChartSkeleton />
-          </>
-        ) : stats ? (
-          <>
-            <RoomTypeChart data={stats.roomTypeDistribution} />
-            <TravelTypeChart data={stats.travelTypeDistribution} />
-          </>
-        ) : null}
+          {/* 评论列表 */}
+          {error ? (
+            <ErrorDisplay
+              title="加载失败"
+              message={error}
+              onRetry={loadComments}
+            />
+          ) : loading ? (
+            <ListSkeleton count={5} />
+          ) : comments.length === 0 ? (
+            <EmptyState
+              title="暂无评论"
+              message="没有找到符合条件的评论，请尝试调整筛选条件"
+            />
+          ) : (
+            <>
+              <div className="space-y-4 mb-8">
+                {comments.map((comment) => (
+                  <CommentCard key={comment._id} comment={comment} />
+                ))}
+              </div>
+
+              {/* 分页 */}
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function CommentsPage() {
+  return (
+    <Suspense fallback={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"><ListSkeleton count={5} /></div>}>
+      <CommentsPageContent />
+    </Suspense>
   );
 }

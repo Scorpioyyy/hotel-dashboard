@@ -13,13 +13,14 @@ export interface Comment {
   _id: string;
   comment: string;
   images: string[];
-  score: 1 | 2 | 3 | 4 | 5;
+  score: number;
+  star: number;  // 1-5星评分
   useful_count: number;
   publish_date: string;
   room_type: string;
   travel_type: string;
   review_count: number;
-  room_type_fuzzy: string;
+  fuzzy_room_type: string;
   quality_score: number;
   // 拆分的类别字段（用于数据库查询）
   category1: StandardCategory | null;

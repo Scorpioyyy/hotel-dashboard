@@ -30,6 +30,24 @@ export function getCategoryGroup(category: StandardCategory): CategoryGroup {
   return '体验类'; // 默认
 }
 
+// 房型列表
+export const ROOM_TYPES = [
+  '大床房',
+  '双床房',
+  '套房',
+  '主题房'
+] as const;
+
+// 出行类型列表（不包含"其他"）
+export const TRAVEL_TYPES = [
+  '家庭亲子',
+  '商务出差',
+  '朋友出游',
+  '情侣出游',
+  '独自旅行',
+  '代人预订'
+] as const;
+
 // 高质量评论阈值
 export const HIGH_QUALITY_THRESHOLD = 8;
 

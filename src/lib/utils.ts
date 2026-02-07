@@ -44,9 +44,31 @@ export function truncate(text: string, maxLength: number): string {
   return text.slice(0, maxLength - 3) + '...';
 }
 
-// 生成评分星星
+// 生成评分星星（支持半星，返回结构化数据）
+export interface StarRating {
+  fullStars: number;
+  hasHalfStar: boolean;
+  emptyStars: number;
+}
+
+export function getScoreStarsData(score: number): StarRating {
+  // 评分对应关系：5分=5星，4.5<=x<5=4.5星，4<=x<4.5=4星，以此类推
+  const fullStars = Math.floor(score);
+  const decimal = score - fullStars;
+  // 只有小数部分 >= 0.5 时才显示半星
+  const hasHalfStar = decimal >= 0.5;
+
+  return {
+    fullStars,
+    hasHalfStar,
+    emptyStars: 5 - fullStars - (hasHalfStar ? 1 : 0),
+  };
+}
+
+// 生成评分星星文本（保留兼容性）
 export function getScoreStars(score: number): string {
-  return '★'.repeat(score) + '☆'.repeat(5 - score);
+  const { fullStars, hasHalfStar, emptyStars } = getScoreStarsData(score);
+  return '★'.repeat(fullStars) + (hasHalfStar ? '⯨' : '') + '☆'.repeat(emptyStars);
 }
 
 // 获取评分颜色类名

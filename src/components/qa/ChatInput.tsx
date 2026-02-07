@@ -1,7 +1,7 @@
 // components/qa/ChatInput.tsx - 聊天输入组件
 'use client';
 
-import { useState, KeyboardEvent } from 'react';
+import { useState, useEffect, KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
   disabled?: boolean;
   isGenerating?: boolean;
   placeholder?: string;
+  prefillText?: string; // 预填充文本（终止后回填用户问题）
 }
 
 // 预设问题
@@ -21,12 +22,20 @@ const PRESET_QUESTIONS = [
   '性价比高吗?'
 ];
 
-export function ChatInput({ onSend, onStop, disabled, isGenerating, placeholder = '输入您的问题...' }: Props) {
+export function ChatInput({ onSend, onStop, disabled, isGenerating, placeholder = '输入您的问题...', prefillText }: Props) {
   const [message, setMessage] = useState('');
+
+  // 当 prefillText 变化时，填充到输入框
+  useEffect(() => {
+    if (prefillText) {
+      setMessage(prefillText);
+    }
+  }, [prefillText]);
 
   const handleSend = () => {
     const trimmed = message.trim();
-    if (trimmed && !disabled) {
+    // 只有在有内容、未禁用、且不在生成中时才能发送
+    if (trimmed && !disabled && !isGenerating) {
       onSend(trimmed);
       setMessage('');
     }
@@ -40,7 +49,9 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, placeholder 
   };
 
   const handlePresetClick = (question: string) => {
-    if (!disabled) {
+    // 只有在未禁用且不在生成中时才能发送预设问题
+    if (!disabled && !isGenerating) {
+      setMessage(''); // 清空输入框（包括预填充的文本）
       onSend(question);
     }
   };
@@ -54,10 +65,10 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, placeholder 
           <button
             key={q}
             onClick={() => handlePresetClick(q)}
-            disabled={disabled}
+            disabled={disabled || isGenerating}
             className={cn(
               'px-3 py-1 text-sm rounded-full transition-colors',
-              disabled
+              disabled || isGenerating
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
             )}

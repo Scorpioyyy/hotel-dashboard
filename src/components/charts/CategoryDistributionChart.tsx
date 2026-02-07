@@ -21,9 +21,10 @@ interface CategoryData {
 
 interface Props {
   data: CategoryData[];
+  onBarClick?: (category: string) => void;
 }
 
-export function CategoryDistributionChart({ data }: Props) {
+export function CategoryDistributionChart({ data, onBarClick }: Props) {
   // 只显示前 10 个类别
   const chartData = data.slice(0, 10);
 
@@ -60,7 +61,12 @@ export function CategoryDistributionChart({ data }: Props) {
               }}
               formatter={(value) => [`${value} 条`, '提及次数']}
             />
-            <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+            <Bar
+              dataKey="count"
+              radius={[0, 4, 4, 0]}
+              cursor={onBarClick ? 'pointer' : 'default'}
+              onClick={(data) => onBarClick?.((data as unknown as CategoryData).category)}
+            >
               {chartData.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={getChartColor(index)} />
               ))}

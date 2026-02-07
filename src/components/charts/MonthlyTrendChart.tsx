@@ -20,8 +20,18 @@ interface MonthlyData {
   avgScore: number;
 }
 
+interface ChartDataItem {
+  fullMonth: string;
+  month: string;
+  year: string;
+  count: number;
+  avgScore: number;
+}
+
 interface Props {
   data: MonthlyData[];
+  onBarClick?: (month: string) => void;
+  onLineClick?: (month: string) => void;
 }
 
 // 自定义X轴刻度组件
@@ -78,7 +88,7 @@ function CustomXAxisTick({ x, y, payload, index, chartData }: CustomTickProps) {
   );
 }
 
-export function MonthlyTrendChart({ data }: Props) {
+export function MonthlyTrendChart({ data, onBarClick, onLineClick }: Props) {
   // 保留完整日期用于提取年份
   const chartData = data.map(d => ({
     fullMonth: d.month,
@@ -89,7 +99,7 @@ export function MonthlyTrendChart({ data }: Props) {
   }));
 
   return (
-    <Card title="月度趋势" subtitle="评论数量与平均评分的月度变化">
+    <Card title="月度趋势" subtitle="评论数量与平均评分的月度变化趋势">
       <div className="h-[320px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 45 }}>
@@ -129,8 +139,36 @@ export function MonthlyTrendChart({ data }: Props) {
               ]}
             />
             <Legend
-              formatter={(value) => (value === 'count' ? '评论数' : '平均分')}
               wrapperStyle={{ paddingTop: 15 }}
+              content={({ payload }) => {
+                // 自定义图例顺序：评论数在前，平均分在后
+                const sortedPayload = payload ? [...payload].sort((a, b) => {
+                  if (a.dataKey === 'count') return -1;
+                  if (b.dataKey === 'count') return 1;
+                  return 0;
+                }) : [];
+                return (
+                  <div className="flex justify-center gap-6">
+                    {sortedPayload.map((entry, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        {entry.dataKey === 'count' ? (
+                          // 评论数：矩形色块
+                          <div className="w-3 h-3" style={{ backgroundColor: entry.color }} />
+                        ) : (
+                          // 平均分：线条带圆点
+                          <svg width="20" height="14" viewBox="0 0 20 14">
+                            <line x1="0" y1="7" x2="20" y2="7" stroke={entry.color} strokeWidth="2" />
+                            <circle cx="10" cy="7" r="4" fill={entry.color} />
+                          </svg>
+                        )}
+                        <span className="text-sm text-gray-600">
+                          {entry.dataKey === 'count' ? '评论数' : '平均分'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              }}
             />
             <Bar
               yAxisId="left"
@@ -138,6 +176,9 @@ export function MonthlyTrendChart({ data }: Props) {
               fill="#3B82F6"
               radius={[4, 4, 0, 0]}
               name="count"
+              legendType="rect"
+              cursor={onBarClick ? 'pointer' : 'default'}
+              onClick={(data) => onBarClick?.((data as unknown as ChartDataItem).fullMonth)}
             />
             <Line
               yAxisId="right"
@@ -145,7 +186,43 @@ export function MonthlyTrendChart({ data }: Props) {
               dataKey="avgScore"
               stroke="#F59E0B"
               strokeWidth={2}
-              dot={{ fill: '#F59E0B', r: 4 }}
+              legendType="line"
+              dot={(props: { cx?: number; cy?: number; payload?: ChartDataItem }) => {
+                const { cx, cy, payload } = props;
+                if (cx === undefined || cy === undefined) return <></>;
+                return (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={4}
+                    fill="#F59E0B"
+                    cursor={onLineClick ? 'pointer' : 'default'}
+                    onClick={() => {
+                      if (onLineClick && payload?.fullMonth) {
+                        onLineClick(payload.fullMonth);
+                      }
+                    }}
+                  />
+                );
+              }}
+              activeDot={(props: { cx?: number; cy?: number; payload?: ChartDataItem }) => {
+                const { cx, cy, payload } = props;
+                if (cx === undefined || cy === undefined) return <></>;
+                return (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={6}
+                    fill="#F59E0B"
+                    cursor={onLineClick ? 'pointer' : 'default'}
+                    onClick={() => {
+                      if (onLineClick && payload?.fullMonth) {
+                        onLineClick(payload.fullMonth);
+                      }
+                    }}
+                  />
+                );
+              }}
               name="avgScore"
             />
           </ComposedChart>

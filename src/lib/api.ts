@@ -21,14 +21,13 @@ export async function getComments(
   if (filters.dateRange?.end) {
     query = query.lte('publish_date', filters.dateRange.end);
   }
-  if (filters.scoreRange?.min) {
-    query = query.gte('score', filters.scoreRange.min);
-  }
-  if (filters.scoreRange?.max) {
-    query = query.lte('score', filters.scoreRange.max);
+
+  // 评分筛选：直接使用 star 字段（1-5）
+  if (filters.scores && filters.scores.length > 0) {
+    query = query.in('star', filters.scores);
   }
   if (filters.roomTypes && filters.roomTypes.length > 0) {
-    query = query.in('room_type_fuzzy', filters.roomTypes);
+    query = query.in('fuzzy_room_type', filters.roomTypes);
   }
   if (filters.travelTypes && filters.travelTypes.length > 0) {
     query = query.in('travel_type', filters.travelTypes);
@@ -152,10 +151,10 @@ export async function getStats() {
 function computeStats(comments: Comment[]) {
   const total = comments.length;
 
-  // 评分分布
+  // 评分分布: 直接使用 star 字段
   const scoreDistribution = [1, 2, 3, 4, 5].map(score => ({
     score,
-    count: comments.filter(c => c.score === score).length
+    count: comments.filter(c => c.star === score).length
   }));
 
   // 月度趋势
@@ -191,7 +190,7 @@ function computeStats(comments: Comment[]) {
   // 房型分布
   const roomTypeCount = new Map<string, number>();
   comments.forEach(c => {
-    roomTypeCount.set(c.room_type_fuzzy, (roomTypeCount.get(c.room_type_fuzzy) || 0) + 1);
+    roomTypeCount.set(c.fuzzy_room_type, (roomTypeCount.get(c.fuzzy_room_type) || 0) + 1);
   });
   const roomTypeDistribution = Array.from(roomTypeCount.entries())
     .map(([roomType, count]) => ({ roomType, count }))
@@ -236,13 +235,14 @@ function parseComment(row: Record<string, unknown>): Comment {
     _id: row._id as string,
     comment: row.comment as string,
     images: typeof row.images === 'string' ? JSON.parse(row.images) : (row.images as string[]) || [],
-    score: row.score as 1 | 2 | 3 | 4 | 5,
+    score: row.score as number,
+    star: row.star as number,
     useful_count: row.useful_count as number,
     publish_date: row.publish_date as string,
     room_type: row.room_type as string,
     travel_type: row.travel_type as string,
     review_count: row.review_count as number,
-    room_type_fuzzy: row.room_type_fuzzy as string,
+    fuzzy_room_type: row.fuzzy_room_type as string,
     quality_score: row.quality_score as number,
     category1: (row.category1 as StandardCategory) || null,
     category2: (row.category2 as StandardCategory) || null,

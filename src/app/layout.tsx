@@ -3,8 +3,8 @@ import Link from 'next/link';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '广州花园酒店评论分析系统',
-  description: '酒店评论数据可视化与智能问答分析平台',
+  title: '花园酒店评论分析',
+  description: '酒店评论数据分析与智能问答平台',
 };
 
 function Navigation() {
@@ -24,10 +24,10 @@ function Navigation() {
           </div>
           <div className="flex items-center space-x-4">
             <Link href="/" className="px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 transition-colors">
-              数据看板
-            </Link>
-            <Link href="/comments" className="px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 transition-colors">
               评论浏览
+            </Link>
+            <Link href="/dashboard" className="px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 transition-colors">
+              数据看板
             </Link>
             <Link href="/qa" className="px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 transition-colors">
               智能问答
@@ -45,10 +45,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
-      <body className="antialiased bg-gray-50 min-h-screen">
+    <html lang="zh-CN" className="h-full overflow-hidden">
+      <body className="antialiased bg-gray-50 h-full flex flex-col overflow-hidden">
         <Navigation />
-        <main>{children}</main>
+        <main className="flex-1 min-h-0 overflow-auto">{children}</main>
       </body>
     </html>
   );
