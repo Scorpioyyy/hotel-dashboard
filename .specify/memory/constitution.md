@@ -18,7 +18,7 @@ Follow-up TODOs: None
 ===============================================================================
 -->
 
-# 广州花园酒店评论数据分析系统 Constitution
+# 花园酒店评论分析系统 Constitution
 
 ## Core Principles
 
@@ -35,7 +35,6 @@ Follow-up TODOs: None
 
 界面设计必须满足以下要求：
 - 全部使用中文界面，包括图表标签、提示信息、错误消息
-- 响应式设计必须支持桌面端和移动端
 - 页面加载时间必须 < 3 秒，问答响应时间必须 < 5 秒
 - 交互反馈必须及时（加载状态、错误提示、成功确认）
 
@@ -54,7 +53,6 @@ Follow-up TODOs: None
 ### IV. 性能与可维护性 (Performance & Maintainability)
 
 代码实现必须兼顾性能和可维护性：
-- 必须为关键查询字段建立数据库索引
 - 代码结构必须模块化，组件职责单一
 - 必须使用 TypeScript 确保类型安全
 - 数据处理逻辑必须与展示逻辑分离
@@ -75,24 +73,8 @@ Follow-up TODOs: None
 
 **技术栈限定**：
 - 前端框架：Next.js（必须使用）
-- 后端数据库：Insforge（通过 MCP 调用）
-- AI 模型：google/gemini-3-flash-preview（通过 Insforge AI SDK 调用）
-- 编程语言：TypeScript
-
-**数据处理约束**：
-- `categories` 字段必须过滤非标准小类（仅保留 14 个标准小类）
-- `images` 字段为数组类型，必须正确解析
-- 日期格式必须统一处理（原始格式为"YYYY年M月D日"）
-- 排除 `quality_reason` 和 `confidence` 字段，不导入数据库
-
-**必选可视化维度**：
-- 评分分布统计
-- 时间趋势分析
-- 房型分析
-- 旅行类型分布
-- 评论类别分布（14 个小类）
-- 质量分布
-- 用户活跃度
+- 后端服务：Insforge（通过 MCP 调用）
+- 编程语言：TypeScript/Python
 
 ## Quality Standards
 
@@ -102,7 +84,6 @@ Follow-up TODOs: None
 - 问答响应时间 < 5 秒
 
 **代码质量**：
-- TypeScript 类型覆盖 100%（禁止使用 `any` 类型，除非有明确理由）
 - 组件必须可复用且职责单一
 - API 接口必须有错误处理
 

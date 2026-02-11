@@ -1,4 +1,4 @@
-# Research: 广州花园酒店评论数据分析系统
+# Research: 花园酒店评论分析系统
 
 **Date**: 2026-01-14
 **Branch**: `001-review-dashboard`
@@ -36,10 +36,17 @@
 
 **数据导入策略**:
 1. 使用 Insforge MCP 的 `bulk-upsert` 工具导入 CSV 数据
-2. 在导入前预处理数据：
-   - 过滤非标准类别
-   - 解析日期格式
-   - 排除不需要的字段
+2. 数据处理要求：
+   - 保留所有原始字段（comment_len, log_* 等统计字段）
+   - 将 `categories` 数组拆分为 `category1`, `category2`, `category3` 三个字段
+   - 新增 `star` 字段：将 `score` 浮点数转换为 1-5 整数
+   - 保留原始 `score` 浮点数用于精确计算
+
+**关键字段说明**:
+- `score`: 0.5-5.0 浮点数（原始评分）
+- `star`: 1-5 整数（转换后的星级，用于筛选）
+- `fuzzy_room_type`: 房型模糊分类（注意不是 room_type_fuzzy）
+- `category1/2/3`: 拆分后的类别字段，便于 SQL 查询
 
 ### 3. AI 问答实现
 
@@ -73,9 +80,10 @@ const completion = await insforge.ai.chat.completions.create({
 ```
 
 **关键词提取策略**:
-- 使用简单的分词 + 停用词过滤
-- 提取名词和形容词作为关键词
-- 支持中文分词（使用 jieba 或简单规则）
+- 基于问题内容提取相关类别（如"早餐"→"餐饮设施"）
+- 使用预定义的类别关键词映射表
+- 检索高质量评论（quality_score ≥ 8）
+- 每次检索最多返回 10 条评论
 
 ### 4. 状态管理
 
@@ -89,10 +97,11 @@ const completion = await insforge.ai.chat.completions.create({
 **状态分布**:
 | 状态类型 | 存储位置 | 原因 |
 |----------|----------|------|
-| 筛选条件 | URL 参数 | 可分享、刷新保持 |
-| 图表数据 | Server Components | SSR 性能优化 |
+| 筛选条件 | URL 参数 + 本地 state | 可分享、刷新保持 |
+| 图表数据 | 本地 state | 客户端获取 |
 | 加载状态 | 本地 state | 仅 UI 需要 |
-| 问答会话 | 本地 state | 不持久化（已澄清） |
+| 问答会话 | sessionStorage | 页面刷新后可恢复 |
+| 活动流状态 | sessionStorage + 全局变量 | 支持页面切换时继续生成 |
 
 ### 5. 样式方案
 
@@ -106,24 +115,34 @@ const completion = await insforge.ai.chat.completions.create({
 
 ### 6. 数据获取模式
 
-**Decision**: 使用 Next.js Server Components + API Routes
+**Decision**: 使用 Client Components + 直接调用 Insforge
 
 **Rationale**:
-- 看板页面使用 Server Components 获取初始数据，减少客户端请求
-- 筛选操作通过 API Routes 动态获取，支持客户端交互
-- 问答功能通过 API Routes 流式响应，提供更好的用户体验
+- 所有页面使用 Client Components，通过 `lib/api.ts` 直接调用 Insforge SDK
+- 无需独立的 API Routes，减少架构复杂度
+- 问答功能通过后台流式服务（`lib/qa-background.ts`）实现，支持页面切换时继续接收输出
 
 **数据流设计**:
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────┐
-│ Server Component │────▶│ Insforge (MCP)  │────▶│ 初始数据    │
-└─────────────────┘     └──────────────────┘     └─────────────┘
-                                                        │
-                                                        ▼
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────┐
-│ Client Component │────▶│ API Routes      │────▶│ 筛选/问答   │
-└─────────────────┘     └──────────────────┘     └─────────────┘
+┌──────────────────┐      ┌────────────────┐      ┌─────────────┐
+│ Client Component │────▶│ lib/api.ts     │────▶│ Insforge SDK│
+└──────────────────┘      └────────────────┘      └─────────────┘
+
+智能问答特殊流程：
+┌────────────────┐      ┌─────────────────────┐      ┌─────────────┐
+│ QA Page        │────▶│ qa-background.ts    │────▶│ Insforge AI │
+└────────────────┘      └─────────────────────┘      └─────────────┘
+                                 │
+                                 ▼
+                           sessionStorage
+                      （保存对话历史和活动流状态）
 ```
+
+**后台流式服务特性**:
+- 使用全局变量管理 AbortController，支持跨组件卸载继续处理
+- 使用 sessionStorage 持久化对话历史和流式状态
+- 页面切换后返回可恢复对话和正在生成的回答
+- 支持终止正在生成的回答
 
 ## 14 个标准小类定义
 

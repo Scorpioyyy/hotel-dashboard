@@ -1,4 +1,4 @@
-# Specification Quality Checklist: 广州花园酒店评论数据分析系统
+# Specification Quality Checklist: 花园酒店评论分析系统
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-01-14

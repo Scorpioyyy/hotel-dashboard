@@ -1,4 +1,11 @@
-# Tasks: 广州花园酒店评论数据分析系统
+# Tasks: 花园酒店评论分析系统
+
+**⚠️ 重要说明**: 本任务列表为初始规划，实际实现中做了以下关键调整：
+1. **架构变更**: 不使用独立的 API Routes，改用 lib/api.ts 直接调用 Insforge SDK
+2. **数据库 Schema**: 使用 `star` (1-5整数)、`fuzzy_room_type`、`category1/2/3` 字段
+3. **路由调整**: 首页为评论浏览页 (`/`)，看板在 `/dashboard`
+4. **QA 增强**: 添加后台流式服务 (lib/qa-background.ts) 支持页面切换时继续生成
+5. **新增功能**: 搜索、多种排序、对话历史恢复
 
 **Input**: Design documents from `/specs/001-review-dashboard/`
 **Prerequisites**: plan.md, spec.md, data-model.md, contracts/api.yaml, research.md

@@ -1,4 +1,4 @@
-# Implementation Plan: 广州花园酒店评论数据分析系统
+# Implementation Plan: 花园酒店评论分析系统
 
 **Branch**: `001-review-dashboard` | **Date**: 2026-01-14 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/001-review-dashboard/spec.md`
@@ -6,8 +6,8 @@
 ## Summary
 
 构建一个基于 Next.js 的全栈 Web 应用，为广州花园酒店评论数据提供：
-1. **数据可视化看板** - 7 个必选维度的图表展示，支持筛选联动
-2. **评论详情浏览** - 评论内容和配图展示，支持多条件筛选
+1. **评论详情浏览** - 评论内容和配图展示，支持多条件筛选
+2. **数据可视化看板** - 7 个必选维度的图表展示，支持筛选联动
 3. **智能问答服务** - 基于 Gemini AI 的自然语言问答，回答附带评论引用
 
 技术方案采用 Next.js 全栈架构，使用 Insforge 作为后端数据库，通过 MCP 调用 Gemini 3 Flash Preview 实现智能问答。
@@ -57,23 +57,16 @@ specs/001-review-dashboard/
 
 ```text
 src/
-├── app/                    # Next.js App Router
-│   ├── page.tsx           # 看板首页
-│   ├── comments/          # 评论列表页
+├── app/                   # Next.js App Router
+│   ├── page.tsx           # 评论浏览页（首页）
+│   ├── dashboard/         # 数据看板页
 │   │   └── page.tsx
 │   ├── qa/                # 智能问答页
 │   │   └── page.tsx
-│   ├── api/               # API 路由
-│   │   ├── comments/
-│   │   │   └── route.ts
-│   │   ├── stats/
-│   │   │   └── route.ts
-│   │   └── qa/
-│   │       └── route.ts
 │   ├── layout.tsx
 │   └── globals.css
 ├── components/            # 可复用组件
-│   ├── charts/           # 图表组件
+│   ├── charts/            # 图表组件
 │   │   ├── ScoreChart.tsx
 │   │   ├── TrendChart.tsx
 │   │   ├── RoomTypeChart.tsx
@@ -81,31 +74,34 @@ src/
 │   │   ├── CategoryChart.tsx
 │   │   ├── QualityChart.tsx
 │   │   └── UserActivityChart.tsx
-│   ├── comments/         # 评论相关组件
+│   ├── comments/          # 评论相关组件
 │   │   ├── CommentCard.tsx
 │   │   ├── CommentList.tsx
 │   │   └── ImageGallery.tsx
-│   ├── filters/          # 筛选器组件
+│   ├── filters/           # 筛选器组件
 │   │   ├── DateRangePicker.tsx
 │   │   ├── FilterBar.tsx
 │   │   └── CategoryFilter.tsx
-│   ├── qa/               # 问答组件
+│   ├── qa/                # 问答组件
 │   │   ├── ChatInput.tsx
 │   │   ├── ChatMessage.tsx
 │   │   └── ReferenceList.tsx
-│   └── ui/               # 基础 UI 组件
+│   └── ui/                # 基础 UI 组件
 │       ├── Loading.tsx
 │       ├── ErrorMessage.tsx
 │       └── Card.tsx
-├── lib/                  # 工具库
-│   ├── insforge.ts       # Insforge 客户端（含 AI 集成）
-│   ├── constants.ts      # 常量定义（14 个标准小类等）
-│   └── utils.ts          # 工具函数
-├── types/                # TypeScript 类型定义
+├── lib/                   # 工具库
+│   ├── insforge.ts        # Insforge 客户端（含 AI 集成）
+│   ├── api.ts             # API 客户端封装（直接调用 Insforge）
+│   ├── qa.ts              # 智能问答服务
+│   ├── qa-background.ts   # 后台问答服务（支持页面切换时继续接收输出）
+│   ├── constants.ts       # 常量定义（14 个标准小类等）
+│   └── utils.ts           # 工具函数
+├── types/                 # TypeScript 类型定义
 │   ├── comment.ts
 │   ├── stats.ts
 │   └── qa.ts
-└── hooks/                # 自定义 Hooks
+└── hooks/                 # 自定义 Hooks
     ├── useComments.ts
     ├── useStats.ts
     └── useFilters.ts
@@ -115,7 +111,7 @@ public/
 └── categories.json        # 类别定义文件
 ```
 
-**Structure Decision**: 采用 Next.js App Router 架构，前后端代码在同一项目中。API 路由处理数据查询和 AI 问答，前端组件负责展示和交互。
+**Structure Decision**: 采用 Next.js App Router 架构，前后端代码在同一项目中。没有独立的 API Routes，所有数据操作通过 `lib/api.ts` 直接调用 Insforge 客户端。智能问答功能使用后台流式服务（`lib/qa-background.ts`）支持页面切换时继续接收输出。
 
 ## Complexity Tracking
 

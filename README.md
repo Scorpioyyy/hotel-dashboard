@@ -1,13 +1,13 @@
 # 酒店评论分析系统（开发模板）
 
-酒店评论分析系统 - 基于真实住客评论的可视化分析与智能问答平台。
+酒店评论分析系统 - 基于真实住客评论的可视化分析与智能问答平台
 
 ## 功能特性
 
 ### 评论浏览
 
-- 多维度筛选：日期范围、评分、房型、出行类型、话题类别
-- 关键词搜索（支持防抖）
+- 多维度筛选：日期范围、评分、房型、出行类型、话题类别、评论质量
+- 关键词搜索：单一关键词整段匹配
 - 多种排序方式：时间、评分、质量分、点赞数、回复数
 - 评论卡片展示：评分、日期、内容、配图、标签
 
@@ -52,16 +52,31 @@
 npm install
 ```
 
-### 配置环境变量
+### 环境配置
 
-创建 `.env` 文件：
+#### 1. 配置 Next.js 应用
 
-```env
-NEXT_PUBLIC_INSFORGE_BASE_URL=your_insforge_url
-NEXT_PUBLIC_INSFORGE_ANON_KEY=your_anon_key
+复制 `env.example` 为 `.env` 并填入您的 Insforge 配置：
+
+```bash
+cp env.example .env
 ```
 
-注：数据库结构需要与 `需求文档.md` 中的第二、四点保持一致
+然后编辑 `.env`，将 `your-insforge-url-here` 和 `your_insforge_anon_key_here` 替换为您的真实值
+
+#### 2. 配置 MCP 服务器
+
+复制 `.mcp.json.example` 为 `.mcp.json` 并填入您的 Insforge Admin 配置：
+
+```bash
+cp .mcp.json.example .mcp.json
+```
+
+然后编辑 `.mcp.json`，将 `your-admin-api-key-here` 和 `your-insforge-url-here` 替换为您的真实值
+
+#### 3. insforge 数据库
+
+数据库的名称、字段等需要与 `需求文档.md` 中的第二、四点保持一致
 
 ### 启动开发服务器
 
@@ -74,58 +89,39 @@ npm run dev
 ## 项目结构
 
 ```
-src/
-├── app/                # 页面路由
-│   ├── page.tsx        # 评论浏览
-│   ├── dashboard/      # 数据看板
-│   └── qa/             # 智能问答
-├── components/
-│   ├── ui/             # 通用 UI 组件
-│   ├── charts/         # 图表组件
-│   ├── comments/       # 评论相关组件
-│   └── qa/             # 问答相关组件
-├── lib/
-│   ├── api.ts          # 数据接口
-│   ├── qa.ts           # AI 问答服务
-│   ├── insforge.ts     # SDK 初始化
-│   ├── constants.ts    # 常量定义
-│   └── utils.ts        # 工具函数
-└── types/              # TypeScript 类型定义
+hotel-dashboard/
+├── src/
+│   ├── app/                    # 页面路由
+│   │   ├── page.tsx            # 评论浏览页（首页）
+│   │   ├── dashboard/page.tsx  # 数据看板
+│   │   └── qa/page.tsx         # 智能问答
+│   ├── components/             # 组件库
+│   │   ├── charts/             # 图表组件
+│   │   ├── comments/           # 评论组件
+│   │   ├── qa/                 # 问答组件
+│   │   └── ui/                 # UI 组件
+│   ├── lib/                    # 工具库
+│   │   ├── insforge.ts         # Insforge 客户端（含 AI 集成）
+│   │   ├── api.ts              # API 客户端封装
+│   │   ├── qa.ts               # 智能问答服务
+│   │   ├── qa-background.ts    # 后台问答服务
+│   │   ├── constants.ts        # 常量
+│   │   └── utils.ts            # 工具函数
+│   └── types/                  # 类型定义
+├── public/
+│   ├── enriched_comments.csv   # 评论数据
+│   └── categories.json         # 类别定义
+└── package.json                # 项目依赖
 ```
 
-## 数据模型
-
-### 评论分类体系
-
-共 14 个标准类别，分为 5 大类：
-
-- **设施类**：房间设施、公共设施、餐饮设施
-- **服务类**：前台服务、客房服务、退房/入住效率
-- **位置类**：交通便利性、周边配套、景观/朝向
-- **价格类**：价格合理性、性价比
-- **体验类**：整体满意度、安静程度、卫生状况
-
-### 质量评分
-
-每条评论包含 0-10 分的质量评分，用于筛选高质量内容（≥8 分）。
-
-## 智能问答工作流程
+## 智能问答工作流
 
 1. **类别提取**：基于关键词匹配，从用户问题中识别相关话题类别
 2. **评论检索**：从数据库获取匹配类别的高质量评论（10 条）
 3. **生成回答**：将评论作为上下文，调用 AI 模型生成回答
 4. **展示来源**：在回答下方展示参考的评论原文
 
-注：无意图识别、无上下文记忆、非传统意义上的文本检索（被过度简化）
-
-## 可用脚本
-
-```bash
-npm run dev      # 启动开发服务器
-npm run build    # 构建生产版本
-npm run start    # 启动生产服务器
-npm run lint     # 运行 ESLint 检查
-```
+注：无意图识别、无上下文记忆、被过度简化的文本检索
 
 ## License
 
