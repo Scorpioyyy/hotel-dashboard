@@ -1,6 +1,6 @@
 {
-  "name": "hotel-dashboard",
-  "version": "0.1.0",
+  "name": "hotel-review-rag",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

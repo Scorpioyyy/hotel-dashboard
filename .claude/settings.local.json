@@ -30,5 +30,6 @@
   },
   "enabledMcpjsonServers": [
     "insforge"
-  ]
+  ],
+  "enableAllProjectMcpServers": true
 }
