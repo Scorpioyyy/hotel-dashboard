@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Comment } from '@/types';
 import { Card, StarRating } from '@/components/ui';
 import { formatDate, cn } from '@/lib/utils';
@@ -93,10 +94,13 @@ export function CommentCard({ comment, onClick }: Props) {
         {comment.images && comment.images.length > 0 && (
           <div className="flex gap-2 mb-3 overflow-x-auto">
             {comment.images.slice(0, 4).map((url, idx) => (
-              <img
+              <Image
                 key={idx}
                 src={url}
                 alt={`评论图片 ${idx + 1}`}
+                width={64}
+                height={64}
+                unoptimized
                 className="w-16 h-16 object-cover rounded-lg flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={(e) => openGallery(idx, e)}
               />
@@ -181,11 +185,13 @@ export function CommentCard({ comment, onClick }: Props) {
           </div>
 
           {/* 主图区域 */}
-          <div className="flex-1 flex items-center justify-center p-4 min-h-0">
-            <img
+          <div className="flex-1 flex items-center justify-center p-4 min-h-0 relative">
+            <Image
               src={comment.images[selectedImageIndex]}
               alt={`评论图片 ${selectedImageIndex + 1}`}
-              className="max-w-full max-h-full object-contain"
+              fill
+              unoptimized
+              className="object-contain"
               onClick={(e) => e.stopPropagation()}
             />
 
@@ -224,10 +230,13 @@ export function CommentCard({ comment, onClick }: Props) {
           <div className="p-4 bg-black/50">
             <div className="flex gap-2 overflow-x-auto justify-center pb-2">
               {comment.images.map((url, idx) => (
-                <img
+                <Image
                   key={idx}
                   src={url}
                   alt={`缩略图 ${idx + 1}`}
+                  width={64}
+                  height={64}
+                  unoptimized
                   className={cn(
                     'w-16 h-16 object-cover rounded cursor-pointer flex-shrink-0 transition-all',
                     idx === selectedImageIndex

@@ -144,7 +144,6 @@
 
 ## Assumptions
 
-- 评论数据已预先清洗，质量分 ≤ 4 分的低质量评论已被剔除
 - Insforge 数据库已通过 MCP 配置完成，可直接调用
 - Gemini 3 Flash Preview 模型接口可用且稳定
 - 用户具备基本的数据分析需求理解能力

@@ -25,11 +25,12 @@
       "Bash(node scripts/upload-to-insforge.js:*)",
       "Bash(node scripts/test-insert.js:*)",
       "Bash(node scripts/upload-with-sdk.mjs:*)",
-      "Bash(del \"C:\\\\Users\\\\22418\\\\Desktop\\\\Scorpio\\\\复旦\\\\课程\\\\大三下\\\\hotel-dashboard\\\\temp_batch0.sql\")"
+      "Bash(del \"C:\\\\Users\\\\22418\\\\Desktop\\\\Scorpio\\\\复旦\\\\课程\\\\大三下\\\\hotel-dashboard\\\\temp_batch0.sql\")",
+      "Bash(npm run lint:*)"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "insforge"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

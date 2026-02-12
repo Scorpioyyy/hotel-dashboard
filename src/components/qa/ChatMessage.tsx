@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Markdown from 'react-markdown';
 import { Comment } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
@@ -258,10 +259,13 @@ export function ChatMessage({ role, content, references, loading, streaming, ref
                     {isExpanded && ref.images && ref.images.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {ref.images.map((img, imgIdx) => (
-                          <img
+                          <Image
                             key={imgIdx}
                             src={img}
                             alt={`评论配图 ${imgIdx + 1}`}
+                            width={80}
+                            height={80}
+                            unoptimized
                             className="w-20 h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity cursor-pointer"
                             onClick={() => openGallery(ref._id, ref.images, imgIdx)}
                           />
@@ -321,11 +325,13 @@ export function ChatMessage({ role, content, references, loading, streaming, ref
             </div>
 
             {/* 主图区域 */}
-            <div className="flex-1 flex items-center justify-center p-4 min-h-0">
-              <img
+            <div className="flex-1 flex items-center justify-center p-4 min-h-0 relative">
+              <Image
                 src={gallery.images[gallery.selectedIndex]}
                 alt={`评论图片 ${gallery.selectedIndex + 1}`}
-                className="max-w-full max-h-full object-contain"
+                fill
+                unoptimized
+                className="object-contain"
                 onClick={(e) => e.stopPropagation()}
               />
 
@@ -364,10 +370,13 @@ export function ChatMessage({ role, content, references, loading, streaming, ref
             <div className="p-4 bg-black/50">
               <div className="flex gap-2 overflow-x-auto justify-center pb-2">
                 {gallery.images.map((url, idx) => (
-                  <img
+                  <Image
                     key={idx}
                     src={url}
                     alt={`缩略图 ${idx + 1}`}
+                    width={64}
+                    height={64}
+                    unoptimized
                     className={cn(
                       'w-16 h-16 object-cover rounded cursor-pointer flex-shrink-0 transition-all',
                       idx === gallery.selectedIndex

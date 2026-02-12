@@ -12,13 +12,13 @@
 │ _id: string (PK)                                            │
 │ comment: string                                             │
 │ images: string[]                                            │
-│ score: integer (1-5)                                        │
+│ score: float (0.5-5.0)                                      │
 │ useful_count: integer                                       │
 │ publish_date: date                                          │
 │ room_type: string                                           │
 │ travel_type: string                                         │
 │ review_count: integer                                       │
-│ room_type_fuzzy: string                                     │
+│ fuzzy_room_type: string                                     │
 │ quality_score: integer (0-10)                               │
 │ categories: string[] (filtered to 14 standard categories)   │
 └─────────────────────────────────────────────────────────────┘
@@ -84,7 +84,7 @@ export interface Comment {
   room_type: string;
   travel_type: string;
   review_count: number;
-  fuzzy_room_type: string; // 注意：字段名是 fuzzy_room_type，不是 room_type_fuzzy
+  fuzzy_room_type: string;
   quality_score: number; // 0-10
   category1: StandardCategory | null;
   category2: StandardCategory | null;
@@ -251,7 +251,7 @@ export function validateComment(data: unknown): Comment {
     room_type: data.room_type ?? '',
     travel_type: data.travel_type ?? '',
     review_count: parseInt(String(data.review_count).replace(/\D/g, '')) || 0,
-    room_type_fuzzy: data.room_type_fuzzy ?? '',
+    fuzzy_room_type: data.fuzzy_room_type ?? '',
     quality_score: data.quality_score ?? 5,
     categories
   };

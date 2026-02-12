@@ -45,7 +45,7 @@
 **关键字段说明**:
 - `score`: 0.5-5.0 浮点数（原始评分）
 - `star`: 1-5 整数（转换后的星级，用于筛选）
-- `fuzzy_room_type`: 房型模糊分类（注意不是 room_type_fuzzy）
+- `fuzzy_room_type`: 房型模糊分类
 - `category1/2/3`: 拆分后的类别字段，便于 SQL 查询
 
 ### 3. AI 问答实现

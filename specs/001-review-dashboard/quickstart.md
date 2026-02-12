@@ -131,7 +131,6 @@ npm run start        # 启动生产服务器
 
 # 代码质量
 npm run lint         # ESLint 检查
-npm run type-check   # TypeScript 类型检查
 ```
 
 ## 关键配置

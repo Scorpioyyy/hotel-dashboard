@@ -337,7 +337,7 @@ export default function QAPage() {
       });
       try {
         sessionStorage.setItem('qa-chat-history', JSON.stringify(updated));
-      } catch (e) { /* ignore */ }
+      } catch { /* ignore */ }
       return updated;
     });
 
