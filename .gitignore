@@ -1,5 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
 /.pnp
@@ -23,21 +21,26 @@
 # misc
 .DS_Store
 *.pem
+nul
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# env files
+# env files (contain API keys and secrets)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+rag-service/.env
 
 # mcp configuration (contains admin API key)
 .mcp.json
+
+# Claude Code local settings
+.claude/settings.local.json
 
 # vercel
 .vercel
@@ -46,3 +49,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+.pytest_cache/
+*.egg

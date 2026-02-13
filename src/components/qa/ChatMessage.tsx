@@ -13,6 +13,7 @@ interface Props {
   content: string;
   references?: Comment[];
   loading?: boolean;
+  loadingText?: string; // 动态加载状态文本（"思考中"/"检索中"）
   streaming?: boolean;
   referencesAnchorRef?: React.RefObject<HTMLParagraphElement | null>;
   skipReferencesDelay?: boolean; // 跳过参考评论延迟显示（用于历史记录恢复）
@@ -29,7 +30,7 @@ const DEFAULT_VISIBLE_COUNT = 3;
 // 参考评论内容延迟显示时间（毫秒）
 const REFERENCES_CONTENT_DELAY = 500;
 
-export function ChatMessage({ role, content, references, loading, streaming, referencesAnchorRef, skipReferencesDelay }: Props) {
+export function ChatMessage({ role, content, references, loading, loadingText, streaming, referencesAnchorRef, skipReferencesDelay }: Props) {
   const isUser = role === 'user';
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [gallery, setGallery] = useState<GalleryState | null>(null);
@@ -153,7 +154,7 @@ export function ChatMessage({ role, content, references, loading, streaming, ref
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-              <span className="text-sm text-gray-500">检索中</span>
+              <span className="text-sm text-gray-500">{loadingText || '思考中'}</span>
             </div>
           ) : isUser ? (
             <p className="text-white whitespace-pre-wrap">{content}</p>

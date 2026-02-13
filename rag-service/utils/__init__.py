@@ -1,0 +1,2 @@
+from utils.formatting import print_retrieval_results, print_rag_result
+from utils.database import get_all_comments_from_insforge
