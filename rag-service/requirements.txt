@@ -9,5 +9,6 @@ nltk
 jieba
 dashscope
 dashvector
+openai
 chromadb
 tqdm

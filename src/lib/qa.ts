@@ -19,13 +19,19 @@ const PYTHON_API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localho
 // 统一流式问答（单次 API 调用，返回结构化事件）
 export async function* chatStreamEvents(
   question: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  history?: { user: string; assistant: string } | null
 ): AsyncGenerator<StreamEvent, void, unknown> {
   try {
+    const body: Record<string, unknown> = { query: question };
+    if (history) {
+      body.history = history;
+    }
+
     const response = await fetch(`${PYTHON_API_URL}/api/v1/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: question }),
+      body: JSON.stringify(body),
       signal,
     });
 

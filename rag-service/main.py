@@ -55,6 +55,7 @@ rag_system = None
 class ChatRequest(BaseModel):
     query: str
     options: dict = {}
+    history: dict | None = None  # {"user": "上一轮问题", "assistant": "上一轮回复"}
 
 
 @app.on_event("startup")
@@ -63,6 +64,7 @@ async def startup():
     global rag_system
 
     api_key = os.getenv("DASHSCOPE_API_KEY")
+    intl_api_key = os.getenv("DASHSCOPE_INTL_API_KEY")
     dashvector_api_key = os.getenv("DASHVECTOR_API_KEY")
     dashvector_endpoint = os.getenv("DASHVECTOR_HOTEL_ENDPOINT")
 
@@ -74,14 +76,16 @@ async def startup():
         from modules.rag_system import HotelReviewRAG
         data_dir = Path(__file__).parent / "data"
 
-        print("正在初始化 RAG 系统...")
+        mode = "国际混合模式（新加坡+北京）" if intl_api_key else "全北京模式"
+        print(f"正在初始化 RAG 系统（{mode}）...")
         rag_system = HotelReviewRAG(
             api_key=api_key,
             dashvector_api_key=dashvector_api_key,
             dashvector_endpoint=dashvector_endpoint,
-            data_dir=data_dir
+            data_dir=data_dir,
+            intl_api_key=intl_api_key or None
         )
-        print("RAG 系统初始化完成")
+        print(f"RAG 系统初始化完成（{mode}）")
     except Exception as e:
         print(f"RAG 系统初始化失败: {e}")
 
@@ -115,6 +119,7 @@ async def chat(request: ChatRequest):
                 enable_hyde=False,
                 enable_generation=False,
                 print_response=False,
+                history=request.history,
                 **{k: v for k, v in request.options.items() if k != "enable_generation"}
             )
 
@@ -142,12 +147,13 @@ async def chat(request: ChatRequest):
 
     query_text = request.query.strip()
     query_options = {k: v for k, v in request.options.items() if k != "enable_generation"}
+    query_history = request.history
 
     def _run_query_stream():
         """在线程池中运行同步 RAG 流水线，通过 queue 推送事件"""
         try:
             for event in rag_system.query_stream(
-                query_text, enable_hyde=False, **query_options
+                query_text, enable_hyde=False, history=query_history, **query_options
             ):
                 event_type = event.get("type")
 

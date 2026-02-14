@@ -4,6 +4,8 @@ import time
 from datetime import datetime
 from dashscope import Generation
 
+from modules.clients import DASHSCOPE_INTL_BASE_URL
+
 
 class ResponseGenerator:
     """回复生成器：基于检索上下文生成最终回复"""
@@ -14,17 +16,31 @@ class ResponseGenerator:
 
     def _build_prompt(self, user_query: str, rewritten_queries=None,
                       ranked_comments=None, summaries=None,
-                      need_retrieval: bool = True, today: datetime | None = None) -> str:
+                      need_retrieval: bool = True, today: datetime | None = None,
+                      history: dict | None = None) -> str:
         """构建生成 prompt"""
+        
+        # 构建上一轮对话上下文
+        history_context = ""
+        if history and history.get("user") and history.get("assistant"):
+            history_context = f"""
+【上一轮对话】
+用户：{history['user']}
+助手：{history['assistant']}
+"""
+
         if not need_retrieval:
             return f"""
 你是广州花园酒店的智能客服助手。
+
+{history_context}
 
 用户问题：{user_query}
 
 请直接回答用户的问题。注意：
 - 如果是问候或闲聊，友好回应
 - 如果是通用问题，给出简洁准确的回答
+- 如果用户的问题是对上一轮对话的追问，请结合上下文理解用户意图
 - 语气要亲切专业
 - 使用Markdown格式输出，不得出现 "```markdown", "```" 标记
 """
@@ -78,6 +94,8 @@ class ResponseGenerator:
 
 今天是：{date}
 
+{history_context}
+
 用户问题：{user_query}
 
 {queries_context}
@@ -98,7 +116,8 @@ class ResponseGenerator:
 9. 引用【相关用户评论】中某一条评论独特内容时应指出其序号评论几（**仅指出非常确定的引用，模棱两可的引用不要指出，务必保证引用序号绝对正确**），供用户参考；但针对参考评论总体（如"多数住客……"等内容）或【xx类别摘要】进行归纳总结时**无需**指出参考了哪些评论
 10. 不得同时列出超过3条参考评论，即禁止诸如"（评论1/3/5/7）"的表述。如需同时引用超过3条评论，则应输出"（评论1/3等）"，而不是将其全部列出。优先给出排名靠前的评论引用
 11. 如果评论信息不足以回答问题，诚实说明
-12. 使用Markdown格式输出，不得出现 "```markdown", "```" 标记
+12. 所有的回复必须仅依赖检索到的用户评论及摘要，不得出现自作主张的幻觉回复，例如帮用户查询酒店今日客房剩余、当前酒店相关活动推荐等一律不允许出现。你并没有接入酒店内部API无法完成这些事情因此禁止在回复中出现此类幻觉信息
+13. 使用Markdown格式输出，不得出现 "```markdown", "```" 标记
 
 用户问题：{user_query}
 
@@ -107,7 +126,7 @@ class ResponseGenerator:
 
     def generate(self, user_query: str, rewritten_queries=None, ranked_comments=None,
                  summaries=None, need_retrieval: bool = True, print_response: bool = True,
-                 today: datetime | None = None) -> tuple[str, float, float, float]:
+                 today: datetime | None = None, history: dict | None = None) -> tuple[str, float, float, float]:
         """
         生成回复（流式输出）
 
@@ -116,7 +135,7 @@ class ResponseGenerator:
         """
         start_time = time.time()
         prompt = self._build_prompt(user_query, rewritten_queries, ranked_comments,
-                                    summaries, need_retrieval, today)
+                                    summaries, need_retrieval, today, history)
 
         completion = Generation.call(
             api_key=self.api_key,
@@ -158,7 +177,7 @@ class ResponseGenerator:
 
     def generate_stream(self, user_query: str, rewritten_queries=None, ranked_comments=None,
                         summaries=None, need_retrieval: bool = True,
-                        today: datetime | None = None):
+                        today: datetime | None = None, history: dict | None = None):
         """
         流式生成回复（yield 每个 chunk）
 
@@ -166,7 +185,7 @@ class ResponseGenerator:
             str: 每个文本 chunk
         """
         prompt = self._build_prompt(user_query, rewritten_queries, ranked_comments,
-                                    summaries, need_retrieval, today)
+                                    summaries, need_retrieval, today, history)
 
         completion = Generation.call(
             api_key=self.api_key,
@@ -185,3 +204,72 @@ class ResponseGenerator:
             message = chunk.output.choices[0].message
             if message.content:
                 yield message.content
+
+
+class IntlResponseGenerator(ResponseGenerator):
+    """国际版回复生成器（新加坡端点，OpenAI 兼容接口）
+
+    继承 ResponseGenerator 复用 _build_prompt()，重写生成方法使用 OpenAI SDK。
+    """
+
+    def __init__(self, api_key: str, model: str = "qwen-plus-latest"):
+        self.api_key = api_key
+        self.model = model
+        from openai import OpenAI
+        self.client = OpenAI(api_key=api_key, base_url=DASHSCOPE_INTL_BASE_URL)
+
+    def generate(self, user_query: str, rewritten_queries=None, ranked_comments=None,
+                 summaries=None, need_retrieval: bool = True, print_response: bool = True,
+                 today: datetime | None = None, history: dict | None = None) -> tuple[str, float, float, float]:
+        start_time = time.time()
+        prompt = self._build_prompt(user_query, rewritten_queries, ranked_comments,
+                                    summaries, need_retrieval, today, history)
+
+        stream = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            stream=True,
+        )
+
+        response_content = ""
+        ttft_model = 0
+        subsequent_time = 0
+        first_token_time = 0
+
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                if not ttft_model:
+                    ttft_model = time.time() - start_time
+                    first_token_time = time.time()
+                if print_response:
+                    print(delta, end="", flush=True)
+                response_content += delta
+
+        if print_response and response_content:
+            print()
+
+        if ttft_model:
+            subsequent_time = time.time() - first_token_time
+
+        generation_time = time.time() - start_time
+        return response_content, ttft_model, subsequent_time, generation_time
+
+    def generate_stream(self, user_query: str, rewritten_queries=None, ranked_comments=None,
+                        summaries=None, need_retrieval: bool = True,
+                        today: datetime | None = None, history: dict | None = None):
+        prompt = self._build_prompt(user_query, rewritten_queries, ranked_comments,
+                                    summaries, need_retrieval, today, history)
+
+        stream = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            stream=True,
+        )
+
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield delta
