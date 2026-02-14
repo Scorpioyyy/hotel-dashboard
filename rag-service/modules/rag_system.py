@@ -137,7 +137,7 @@ class HotelReviewRAG:
 
         # 1. 意图识别（传入历史对话用于上下文理解）
         intent_recognition_start = time.time()
-        need_retrieval = self.intent_recognizer.recognize(user_query, history=history)
+        need_retrieval = self.intent_recognizer.recognize(user_query)
         timing['intent_recognition'] = time.time() - intent_recognition_start
 
         # 2. 意图检测与意图扩展
@@ -338,7 +338,7 @@ class HotelReviewRAG:
         query_processing_start = time.time()
 
         intent_recognition_start = time.time()
-        need_retrieval = self.intent_recognizer.recognize(user_query, history=history)
+        need_retrieval = self.intent_recognizer.recognize(user_query)
         timing['intent_recognition'] = time.time() - intent_recognition_start
 
         # 发送意图识别结果（前端据此控制"检索中"显示）
