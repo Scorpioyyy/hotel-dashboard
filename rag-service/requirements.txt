@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+requests
+pandas
+numpy
+nltk
+jieba
+dashscope
+dashvector
+chromadb
+tqdm

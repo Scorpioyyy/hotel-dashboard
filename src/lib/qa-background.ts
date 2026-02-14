@@ -1,7 +1,7 @@
 // lib/qa-background.ts - 后台问答服务（支持页面切换时继续接收输出）
 
 import { Comment } from '@/types';
-import { getReferencesForQuestion, askQuestionStream } from './qa';
+import { chatStreamEvents } from './qa';
 
 export interface Message {
   id: string;
@@ -9,6 +9,7 @@ export interface Message {
   content: string;
   references?: Comment[];
   loading?: boolean;
+  loadingText?: string; // 动态加载状态文本（"思考中"/"检索中"）
   streaming?: boolean;
 }
 
@@ -17,6 +18,7 @@ interface ActiveStream {
   content: string;
   references: Comment[];
   isComplete: boolean;
+  loadingText?: string; // 当前加载状态文本
   error?: string;
 }
 
@@ -135,7 +137,8 @@ export function startBackgroundStream(
     id: assistantMessageId,
     role: 'assistant',
     content: '',
-    loading: true
+    loading: true,
+    loadingText: '思考中'
   };
 
   // 初始化消息列表
@@ -147,97 +150,120 @@ export function startBackgroundStream(
     messageId: assistantMessageId,
     content: '',
     references: [],
-    isComplete: false
+    isComplete: false,
+    loadingText: '思考中'
   });
 
   // 创建新的 AbortController
   activeAbortController = new AbortController();
   const signal = activeAbortController.signal;
 
-  // 启动后台流式处理
+  // 辅助函数：更新消息中的助手消息
+  const updateAssistantMessage = (updates: Partial<Message>) => {
+    let messages = loadMessages();
+    messages = messages.map(msg =>
+      msg.id === assistantMessageId ? { ...msg, ...updates } : msg
+    );
+    saveMessages(messages);
+    return messages;
+  };
+
+  // 启动后台流式处理（单次 API 调用）
   activeStreamPromise = (async () => {
     try {
-      // 获取相关评论
-      const references = await getReferencesForQuestion(question);
-
-      if (signal.aborted) return;
-
-      // 更新活动流状态
-      saveActiveStream({
-        messageId: assistantMessageId,
-        content: '',
-        references,
-        isComplete: false
-      });
-
-      // 更新消息状态为流式中
-      let messages = loadMessages();
-      messages = messages.map(msg =>
-        msg.id === assistantMessageId
-          ? { ...msg, loading: false, streaming: true }
-          : msg
-      );
-      saveMessages(messages);
-      onUpdate?.(messages, false);
-
-      // 流式接收回复
+      let references: Comment[] = [];
       let fullContent = '';
-      for await (const chunk of askQuestionStream(question, references, signal)) {
+
+      for await (const event of chatStreamEvents(question, signal)) {
         if (signal.aborted) break;
 
-        fullContent += chunk;
+        if (event.type === 'intent') {
+          if (event.needRetrieval) {
+            // 意图识别结果：需要检索 → 显示"检索中"
+            saveActiveStream({
+              messageId: assistantMessageId,
+              content: '',
+              references: [],
+              isComplete: false,
+              loadingText: '检索中'
+            });
+            const messages = updateAssistantMessage({ loadingText: '检索中' });
+            onUpdate?.(messages, false);
+          } else {
+            // 意图识别结果：不需要检索 → 保持"思考中"直到第一个 chunk 到来
+            saveActiveStream({
+              messageId: assistantMessageId,
+              content: '',
+              references: [],
+              isComplete: false,
+              loadingText: '思考中'
+            });
+            const messages = updateAssistantMessage({ loadingText: '思考中' });
+            onUpdate?.(messages, false);
+          }
 
-        // 更新活动流状态
-        saveActiveStream({
-          messageId: assistantMessageId,
-          content: fullContent,
-          references,
-          isComplete: false
-        });
+        } else if (event.type === 'references') {
+          references = event.comments;
+          // 检索+重排完成 → 回到"思考中"，等待模型生成第一个 token
+          saveActiveStream({
+            messageId: assistantMessageId,
+            content: '',
+            references,
+            isComplete: false,
+            loadingText: '思考中'
+          });
+          const messages = updateAssistantMessage({ loadingText: '思考中' });
+          onUpdate?.(messages, false);
 
-        // 更新消息
-        messages = loadMessages();
-        messages = messages.map(msg =>
-          msg.id === assistantMessageId
-            ? { ...msg, content: fullContent }
-            : msg
-        );
-        saveMessages(messages);
-        onUpdate?.(messages, false);
+        } else if (event.type === 'chunk') {
+          fullContent += event.content;
+          saveActiveStream({
+            messageId: assistantMessageId,
+            content: fullContent,
+            references,
+            isComplete: false,
+            loadingText: undefined
+          });
+          // 第一个 chunk 到来时切换为流式输出状态
+          const messages = updateAssistantMessage({
+            content: fullContent, loading: false, loadingText: undefined, streaming: true
+          });
+          onUpdate?.(messages, false);
+
+        } else if (event.type === 'error') {
+          fullContent = `抱歉，${event.message}`;
+          const messages = updateAssistantMessage({
+            content: fullContent, loading: false, loadingText: undefined, streaming: false
+          });
+          saveMessages(messages);
+          clearActiveStream();
+          onUpdate?.(messages, true);
+          return;
+
+        } else if (event.type === 'done') {
+          // 流式完成
+        }
       }
 
       // 流式完成
       if (!signal.aborted) {
-        // 标记完成（不要立即清除 activeStream，让页面的轮询能检测到完成状态）
         saveActiveStream({
           messageId: assistantMessageId,
           content: fullContent,
           references,
-          isComplete: true
+          isComplete: true,
+          loadingText: undefined
         });
-
-        messages = loadMessages();
-        messages = messages.map(msg =>
-          msg.id === assistantMessageId
-            ? { ...msg, streaming: false, references }
-            : msg
-        );
-        saveMessages(messages);
-        // 注意：这里不调用 clearActiveStream()，由页面的 checkActiveStream 检测到完成后清除
+        const messages = updateAssistantMessage({ streaming: false, references });
         onUpdate?.(messages, true);
       }
     } catch (error) {
       if (signal.aborted) return;
 
       const errorMessage = error instanceof Error ? error.message : '抱歉，出现了错误，请稍后重试。';
-
-      // 更新为错误状态
-      let messages = loadMessages();
-      messages = messages.map(msg =>
-        msg.id === assistantMessageId
-          ? { ...msg, content: errorMessage, loading: false, streaming: false }
-          : msg
-      );
+      const messages = updateAssistantMessage({
+        content: errorMessage, loading: false, loadingText: undefined, streaming: false
+      });
       saveMessages(messages);
       clearActiveStream();
       onUpdate?.(messages, true);
@@ -265,7 +291,7 @@ export function syncActiveStreamToMessages(): Message[] {
   if (activeStream.isComplete) {
     const updatedMessages = messages.map(msg =>
       msg.id === activeStream.messageId
-        ? { ...msg, content: activeStream.content, streaming: false, loading: false, references: activeStream.references }
+        ? { ...msg, content: activeStream.content, streaming: false, loading: false, loadingText: undefined, references: activeStream.references }
         : msg
     );
     saveMessages(updatedMessages);
@@ -273,10 +299,17 @@ export function syncActiveStreamToMessages(): Message[] {
     return updatedMessages;
   }
 
-  // 如果流还在进行中，更新消息内容
+  // 如果流还在进行中，根据 loadingText 恢复状态
+  const isLoading = !!activeStream.loadingText;
   const updatedMessages = messages.map(msg =>
     msg.id === activeStream.messageId
-      ? { ...msg, content: activeStream.content, streaming: true, loading: false }
+      ? {
+          ...msg,
+          content: activeStream.content,
+          streaming: !isLoading,
+          loading: isLoading,
+          loadingText: activeStream.loadingText
+        }
       : msg
   );
 

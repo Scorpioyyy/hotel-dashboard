@@ -221,13 +221,15 @@ export default function QAPage() {
         clearActiveStream();
       }
 
+      const isLoading = !!activeStream.loadingText;
       setMessages(prev => prev.map(msg =>
         msg.id === activeStream.messageId
           ? {
               ...msg,
               content: activeStream.content,
-              streaming: !activeStream.isComplete,
-              loading: false,
+              streaming: !activeStream.isComplete && !isLoading,
+              loading: isLoading,
+              loadingText: activeStream.loadingText,
               references: activeStream.isComplete ? activeStream.references : msg.references
             }
           : msg
@@ -422,11 +424,11 @@ export default function QAPage() {
               <h2 className="text-lg font-medium text-gray-900 mb-2">欢迎使用智能问答</h2>
               <p className="text-gray-500 mb-6">您可以询问关于酒店设施、服务、位置等方面的问题</p>
               <div className="flex flex-wrap justify-center gap-2">
-                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">酒店早餐</span>
                 <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">房间设施</span>
                 <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">服务质量</span>
                 <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">交通位置</span>
                 <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">性价比</span>
+                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">住客体验</span>
               </div>
             </div>
           ) : (
@@ -445,6 +447,7 @@ export default function QAPage() {
                       content={msg.content}
                       references={msg.references}
                       loading={msg.loading}
+                      loadingText={msg.loadingText}
                       streaming={msg.streaming}
                       referencesAnchorRef={isLastAssistant ? referencesAnchorRef : undefined}
                       skipReferencesDelay={!isLastAssistant || isInitialLoadRef.current}

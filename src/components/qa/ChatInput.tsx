@@ -15,11 +15,12 @@ interface Props {
 
 // 预设问题
 const PRESET_QUESTIONS = [
-  '酒店的早餐怎么样?',
-  '房间设施如何?',
-  '服务态度好吗?',
-  '交通方便吗?',
-  '性价比高吗?'
+  '酒店有什么特色？',
+  '交通方便吗？',
+  '早餐怎么样？',
+  '酒店的床舒服吗？睡眠质量怎么样？',
+  '健身房、泳池等公共设施如何？',
+  '近期入住花园大床房的住客体验如何？'
 ];
 
 export function ChatInput({ onSend, onStop, disabled, isGenerating, placeholder = '输入您的问题...', prefillText }: Props) {

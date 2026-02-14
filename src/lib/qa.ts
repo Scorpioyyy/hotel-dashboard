@@ -1,164 +1,149 @@
-// lib/qa.ts - 智能问答服务
-import { ai } from './insforge';
-import { getHighQualityComments } from './api';
-import { Comment } from '@/types';
+// lib/qa.ts - 智能问答服务（调用 Python RAG API）
+import { Comment, StandardCategory } from '@/types';
 
 export interface QAResponse {
   answer: string;
   references: Comment[];
 }
 
-// 从问题中提取相关类别
-function extractCategories(question: string): string[] {
-  const categories: string[] = [];
+// 统一流式事件类型
+export type StreamEvent =
+  | { type: 'intent'; needRetrieval: boolean }
+  | { type: 'references'; comments: Comment[] }
+  | { type: 'chunk'; content: string }
+  | { type: 'error'; message: string }
+  | { type: 'done' };
 
-  const categoryKeywords: Record<string, string[]> = {
-    '房间设施': ['房间', '设施', '床', '空调', '电视', '洗手间', '浴室', '卫生间'],
-    '公共设施': ['泳池', '健身房', '电梯', '大堂', '花园', '停车'],
-    '餐饮设施': ['早餐', '餐厅', '自助餐', '美食', '吃饭', '用餐'],
-    '前台服务': ['前台', '接待', '办理', '入住', '服务员'],
-    '客房服务': ['打扫', '清洁', '送餐', '客房'],
-    '退房/入住效率': ['退房', '入住', '效率', '等待', '排队', '办理入住'],
-    '交通便利性': ['交通', '地铁', '打车', '位置', '出行'],
-    '周边配套': ['周边', '附近', '逛街', '购物', '景点'],
-    '景观/朝向': ['景观', '风景', '朝向', '窗户', '视野'],
-    '性价比': ['性价比', '值不值', '划算'],
-    '价格合理性': ['价格', '贵', '便宜', '收费'],
-    '整体满意度': ['整体', '总体', '满意', '推荐', '体验'],
-    '安静程度': ['安静', '噪音', '吵', '隔音'],
-    '卫生状况': ['卫生', '干净', '整洁', '清洁']
-  };
+const PYTHON_API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
 
-  for (const [category, keywords] of Object.entries(categoryKeywords)) {
-    if (keywords.some(kw => question.includes(kw))) {
-      categories.push(category);
-    }
-  }
-
-  return categories;
-}
-
-// 构建系统提示词
-function buildSystemPrompt(references: Comment[]): string {
-  const referencesText = references
-    .map((r, i) => `
-【评论 ${i + 1}】
-- 评分: ${r.score}/5
-- 房型: ${r.room_type}
-- 出行类型: ${r.travel_type}
-- 发布日期: ${r.publish_date}
-- 内容: ${r.comment}
-`)
-    .join('\n');
-
-  return `你是广州花园酒店的智能客服助手。请根据以下真实住客评论来回答用户的问题。
-
-## 参考评论
-${referencesText}
-
-## 回答要求
-1. 基于上述评论内容进行回答，确保信息准确
-2. 如果评论中没有相关信息，请如实说明
-3. 回答要简洁明了，重点突出
-4. 可以综合多条评论给出全面的回答
-5. 在回答中适当引用评论内容作为依据
-6. 保持友好专业的语气
-7. 可以使用 Markdown 格式组织回答`;
-}
-
-// 检索评论数量（超参数）
-const QA_RETRIEVAL_LIMIT = 10;
-
-// 获取相关评论（供外部调用）
-export async function getReferencesForQuestion(question: string): Promise<Comment[]> {
-  const categories = extractCategories(question);
-  return await getHighQualityComments(
-    categories.length > 0 ? categories : undefined,
-    QA_RETRIEVAL_LIMIT
-  );
-}
-
-// 流式问答服务
-export async function* askQuestionStream(
+// 统一流式问答（单次 API 调用，返回结构化事件）
+export async function* chatStreamEvents(
   question: string,
-  references: Comment[],
   signal?: AbortSignal
-): AsyncGenerator<string, void, unknown> {
-  if (references.length === 0) {
-    yield '抱歉，暂时没有找到相关的评论信息来回答您的问题。请尝试换一种方式提问。';
-    return;
-  }
-
-  const systemPrompt = buildSystemPrompt(references);
-
+): AsyncGenerator<StreamEvent, void, unknown> {
   try {
-    const stream = await ai.chat.completions.create({
-      model: 'google/gemini-3-flash-preview',  // openai/gpt-4o
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: question }
-      ],
-      temperature: 0.7,
-      maxTokens: 1000,
-      stream: true
+    const response = await fetch(`${PYTHON_API_URL}/api/v1/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: question }),
+      signal,
     });
 
-    for await (const chunk of stream) {
-      // 检查是否已被终止
-      if (signal?.aborted) {
-        return;
+    if (!response.ok) {
+      yield { type: 'error', message: '生成回答时出现问题，请稍后重试。' };
+      return;
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      yield { type: 'error', message: '无法读取响应流。' };
+      return;
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      if (signal?.aborted) return;
+
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+
+        try {
+          const event = JSON.parse(line.slice(6));
+
+          if (event.type === 'intent') {
+            yield { type: 'intent', needRetrieval: event.data?.need_retrieval ?? true };
+          } else if (event.type === 'references') {
+            const rawComments = event.data?.comments || [];
+            yield { type: 'references', comments: rawComments.map(mapToComment) };
+          } else if (event.type === 'chunk' && event.content) {
+            yield { type: 'chunk', content: event.content };
+          } else if (event.type === 'error') {
+            yield { type: 'error', message: event.message || '出现错误' };
+            return;
+          } else if (event.type === 'done') {
+            yield { type: 'done' };
+          }
+        } catch {
+          // 忽略 JSON 解析失败的行
+        }
       }
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        yield content;
+    }
+
+    // 处理 buffer 中剩余的数据
+    if (buffer.startsWith('data: ')) {
+      try {
+        const event = JSON.parse(buffer.slice(6));
+        if (event.type === 'chunk' && event.content) {
+          yield { type: 'chunk', content: event.content };
+        }
+      } catch {
+        // 忽略
       }
     }
   } catch (error) {
-    // 如果是终止导致的错误，不输出错误信息
-    if (signal?.aborted) {
-      return;
-    }
-    console.error('AI 调用失败:', error);
-    yield '抱歉，生成回答时出现问题，请稍后重试。';
+    if (signal?.aborted) return;
+    console.error('RAG API 调用失败:', error);
+    yield { type: 'error', message: '生成回答时出现问题，请稍后重试。' };
   }
 }
 
 // 非流式问答（保留兼容）
 export async function askQuestion(question: string): Promise<QAResponse> {
-  const categories = extractCategories(question);
-  const references = await getHighQualityComments(
-    categories.length > 0 ? categories : undefined,
-    QA_RETRIEVAL_LIMIT
-  );
-
-  if (references.length === 0) {
-    return {
-      answer: '抱歉，暂时没有找到相关的评论信息来回答您的问题。请尝试换一种方式提问。',
-      references: []
-    };
-  }
-
-  const systemPrompt = buildSystemPrompt(references);
-
   try {
-    const response = await ai.chat.completions.create({
-      model: 'google/gemini-3-flash-preview',  // openai/gpt-4o
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: question }
-      ],
-      temperature: 0.7,
-      maxTokens: 1000
-    });
+    let answer = '';
+    const references: Comment[] = [];
 
-    const answer = response.choices[0]?.message?.content || '抱歉，生成回答时出现问题，请稍后重试。';
+    for await (const event of chatStreamEvents(question)) {
+      if (event.type === 'chunk') {
+        answer += event.content;
+      } else if (event.type === 'references') {
+        references.push(...event.comments);
+      } else if (event.type === 'error') {
+        throw new Error(event.message);
+      }
+    }
 
-    return {
-      answer,
-      references
-    };
+    return { answer: answer || '抱歉，生成回答时出现问题，请稍后重试。', references };
   } catch (error) {
-    console.error('AI 调用失败:', error);
+    console.error('RAG API 调用失败:', error);
     throw new Error('生成回答失败，请稍后重试');
   }
+}
+
+// 将 Python API 返回的评论对象转换为前端 Comment 类型
+function mapToComment(raw: Record<string, unknown>): Comment {
+  const category1 = (raw.category1 as StandardCategory) || null;
+  const category2 = (raw.category2 as StandardCategory) || null;
+  const category3 = (raw.category3 as StandardCategory) || null;
+  const categories: StandardCategory[] = [category1, category2, category3].filter(
+    (c): c is StandardCategory => c !== null
+  );
+
+  return {
+    _id: String(raw._id || ''),
+    comment: String(raw.comment || ''),
+    images: (raw.images as string[]) || [],
+    score: Number(raw.score || 0),
+    star: Number(raw.star || raw.score || 0),
+    useful_count: Number(raw.useful_count || 0),
+    publish_date: String(raw.publish_date || ''),
+    room_type: String(raw.room_type || ''),
+    fuzzy_room_type: String(raw.fuzzy_room_type || ''),
+    travel_type: String(raw.travel_type || ''),
+    review_count: Number(raw.review_count || 0),
+    quality_score: Number(raw.quality_score || 0),
+    category1,
+    category2,
+    category3,
+    categories,
+  };
 }
