@@ -113,6 +113,25 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 15);
 }
 
+// 从消息列表中提取上一轮完整对话（用户提问 + 助手回复）
+function extractLastConversation(messages: Message[]): { user: string; assistant: string } | null {
+  // 从后往前找到最后一条有内容的助手消息及其对应的用户消息
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'assistant' && messages[i].content.trim()) {
+      // 找到对应的用户消息（紧接在前面的 user 消息）
+      for (let j = i - 1; j >= 0; j--) {
+        if (messages[j].role === 'user') {
+          return {
+            user: messages[j].content,
+            assistant: messages[i].content
+          };
+        }
+      }
+    }
+  }
+  return null;
+}
+
 // 启动后台流式问答
 export function startBackgroundStream(
   question: string,
@@ -168,13 +187,16 @@ export function startBackgroundStream(
     return messages;
   };
 
+  // 提取上一轮完整对话（用于多轮对话上下文）
+  const lastHistory = extractLastConversation(existingMessages);
+
   // 启动后台流式处理（单次 API 调用）
   activeStreamPromise = (async () => {
     try {
       let references: Comment[] = [];
       let fullContent = '';
 
-      for await (const event of chatStreamEvents(question, signal)) {
+      for await (const event of chatStreamEvents(question, signal, lastHistory)) {
         if (signal.aborted) break;
 
         if (event.type === 'intent') {

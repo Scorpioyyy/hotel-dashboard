@@ -26,7 +26,9 @@
   - 内容质量：含评论质量分、评论长度、回复数、点赞数等特征
   - 时效性：使用半衰期模型，衰减率受意图检测结果影响 *（注：评论数据截止至 2025/4/18）*
 - 流式回答生成：基于检索上下文的 LLM 流式输出
+- 单轮上下文记忆：自动携带上一轮对话，支持追问
 - 展示参考评论来源，支持终止生成与清除对话
+- 国际双模式部署：支持全北京模式和国际混合模式（新加坡+北京）
 
 ## 系统架构
 
@@ -92,7 +94,8 @@ cp .env.example .env
 | `NEXT_PUBLIC_INSFORGE_BASE_URL` | Insforge 后端地址 |
 | `NEXT_PUBLIC_INSFORGE_ANON_KEY` | Insforge 匿名密钥 |
 | `NEXT_PUBLIC_PYTHON_API_URL` | RAG 服务地址（开发环境 `http://localhost:8000`） |
-| `DASHSCOPE_API_KEY` | 阿里云 DashScope API Key |
+| `DASHSCOPE_API_KEY` | DashScope API Key（北京端点） |
+| `DASHSCOPE_INTL_API_KEY` | DashScope API Key（新加坡端点，可选） |
 | `DASHVECTOR_API_KEY` | DashVector API Key |
 | `DASHVECTOR_HOTEL_ENDPOINT` | DashVector 集合端点 |
 
@@ -184,7 +187,7 @@ hotel-review-rag/
   └─ 多因子排序（相关性 40% + 内容质量 40% + 时效性 20%）
   │
   ▼
-Top-10 评论 + 类别摘要 ──> 组装上下文
+Top-10 评论 + 类别摘要 + 上一轮对话问答 ──> 组装上下文
   │
   ▼
 LLM 流式生成回答
@@ -200,12 +203,13 @@ LLM 流式生成回答
 
 ### 后端 RAG 服务部署（Zeabur 香港节点）
 
-> 由于 RAG 服务需要调用阿里云 DashScope / DashVector API（中国大陆），需部署在对大陆网络通畅的节点。推荐使用 Zeabur 香港区域。
+> 由于 RAG 服务需调用阿里云 DashScope / DashVector API（中国大陆），因此需部署在对大陆网络通畅的节点，推荐使用 Zeabur 香港区域
 
 1. 在 [Zeabur](https://zeabur.com) 创建新项目，选择 **Hong Kong** 区域
 2. 连接 GitHub 仓库，指定根目录为 `rag-service/`
 3. 配置环境变量（`DASHSCOPE_API_KEY`、`DASHVECTOR_*`、`NEXT_PUBLIC_INSFORGE_*`）
-4. Zeabur 会自动识别 `Procfile` 和 `runtime.txt` 进行部署
+4. 可选：配置 `DASHSCOPE_INTL_API_KEY` 启用国际混合模式（意图识别和重排保持北京，其余切换新加坡）
+5. Zeabur 会自动识别 `Procfile` 和 `runtime.txt` 进行部署
 
 部署后将 RAG 服务的公网地址填入 Vercel 的 `NEXT_PUBLIC_PYTHON_API_URL` 环境变量，然后 Redeploy Vercel 项目
 
@@ -217,8 +221,10 @@ LLM 流式生成回答
 POST /api/v1/chat
 Content-Type: application/json
 
-{"query": "酒店有什么特色？"}
+{"query": "酒店有什么特色？", "history": {"user": "上一轮问题", "assistant": "上一轮回复"}}
 ```
+
+`history` 字段可选，用于多轮对话上下文（仅传上一轮问答，不含参考评论）
 
 响应为 SSE 流，事件类型：
 - `intent` — 意图识别结果

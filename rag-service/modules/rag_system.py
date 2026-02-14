@@ -10,12 +10,12 @@ import dashvector
 import chromadb
 
 from config import TODAY, EXACT_ROOM_TYPES, FUZZY_ROOM_TYPES
-from modules.clients import LLMClient, EmbeddingClient
+from modules.clients import LLMClient, EmbeddingClient, IntlLLMClient, IntlEmbeddingClient
 from modules.index import InvertedIndex
 from modules.intent import IntentRecognizer, IntentDetector, IntentExpander, HyDEGenerator
 from modules.retriever import HybridRetriever
 from modules.ranker import Reranker, MultiFactorRanker
-from modules.generator import ResponseGenerator
+from modules.generator import ResponseGenerator, IntlResponseGenerator
 from utils.database import get_all_comments_from_insforge
 
 
@@ -24,6 +24,7 @@ class HotelReviewRAG:
 
     def __init__(self, api_key: str, dashvector_api_key: str, dashvector_endpoint: str,
                  data_dir: Path, df_comments: pd.DataFrame = None,
+                 intl_api_key: str = None,
                  detection_model: str = "qwen-plus",
                  expansion_hyde_model: str = "qwen-flash",
                  generation_model: str = "deepseek-v3.2"):
@@ -31,11 +32,12 @@ class HotelReviewRAG:
         初始化 RAG 系统
 
         参数:
-            api_key: DashScope API Key
+            api_key: DashScope API Key（北京端点）
             dashvector_api_key: DashVector API Key
             dashvector_endpoint: DashVector 集合端点
             data_dir: 数据目录（包含 inverted_index.pkl 和 chroma_db/）
             df_comments: 评论 DataFrame（若为 None 则从 Insforge 数据库加载）
+            intl_api_key: DashScope 国际版 API Key（新加坡端点，为空则使用全北京模式）
             detection_model: 意图检测模型
             expansion_hyde_model: 意图扩展/HyDE 模型
             generation_model: 回复生成模型
@@ -61,23 +63,33 @@ class HotelReviewRAG:
         else:
             self.df_comments = get_all_comments_from_insforge()
 
-        # 初始化各组件
-        self.detection_client = LLMClient(api_key=api_key, model=detection_model, json=True)
-        self.expansion_hyde_client = LLMClient(api_key=api_key, model=expansion_hyde_model, json=True)
-        self.embedding_client = EmbeddingClient(api_key=api_key)
+        # 意图识别和重排始终使用北京端点（新加坡不可用）
         self.intent_recognizer = IntentRecognizer(api_key=api_key)
+        self.reranker = Reranker(api_key=api_key)
+
+        if intl_api_key:
+            # 国际混合模式：意图检测/扩展/Embedding/生成 使用新加坡端点
+            detection_client = IntlLLMClient(intl_api_key, model=detection_model, json=True)
+            expansion_hyde_client = IntlLLMClient(intl_api_key, model=expansion_hyde_model, json=True)
+            embedding_client = IntlEmbeddingClient(intl_api_key)
+            self.generator = IntlResponseGenerator(intl_api_key, model="qwen-plus-latest")
+        else:
+            # 全北京模式
+            detection_client = LLMClient(api_key=api_key, model=detection_model, json=True)
+            expansion_hyde_client = LLMClient(api_key=api_key, model=expansion_hyde_model, json=True)
+            embedding_client = EmbeddingClient(api_key=api_key)
+            self.generator = ResponseGenerator(api_key=api_key, model=generation_model)
+
         self.intent_detector = IntentDetector(
-            self.detection_client, EXACT_ROOM_TYPES, FUZZY_ROOM_TYPES
+            detection_client, EXACT_ROOM_TYPES, FUZZY_ROOM_TYPES
         )
-        self.intent_expander = IntentExpander(self.expansion_hyde_client)
-        self.hyde_generator = HyDEGenerator(self.expansion_hyde_client)
+        self.intent_expander = IntentExpander(expansion_hyde_client)
+        self.hyde_generator = HyDEGenerator(expansion_hyde_client)
         self.retriever = HybridRetriever(
             self.inverted_index, self.comments_collection,
             self.reverse_queries_collection, self.summaries_collection,
-            self.embedding_client, self.df_comments, self.hyde_generator
+            embedding_client, self.df_comments, self.hyde_generator
         )
-        self.reranker = Reranker(api_key=api_key)
-        self.generator = ResponseGenerator(api_key=api_key, model=generation_model)
 
     def query(self, user_query: str,
               route_topk: int = 150,
@@ -102,7 +114,8 @@ class HotelReviewRAG:
               implied_boost: float = 0.5,
               clear_boost: float = 0.5,
               half_life_days: int = 180,
-              today: datetime | None = TODAY) -> dict:
+              today: datetime | None = TODAY,
+              history: dict | None = None) -> dict:
         """
         处理用户查询并生成回复
 
@@ -122,9 +135,9 @@ class HotelReviewRAG:
         # 一、查询处理
         query_processing_start = time.time()
 
-        # 1. 意图识别
+        # 1. 意图识别（传入历史对话用于上下文理解）
         intent_recognition_start = time.time()
-        need_retrieval = self.intent_recognizer.recognize(user_query)
+        need_retrieval = self.intent_recognizer.recognize(user_query, history=history)
         timing['intent_recognition'] = time.time() - intent_recognition_start
 
         # 2. 意图检测与意图扩展
@@ -157,7 +170,8 @@ class HotelReviewRAG:
             if enable_generation:
                 first_token_base = time.time() - total_start
                 response, ttft_model, subsequent, generation = self.generator.generate(
-                    user_query, need_retrieval=False, print_response=print_response, today=today
+                    user_query, need_retrieval=False, print_response=print_response,
+                    today=today, history=history
                 )
                 timing['ttft'] = first_token_base + ttft_model
                 timing['ttft_model'] = ttft_model
@@ -236,7 +250,8 @@ class HotelReviewRAG:
                 summaries=summaries,
                 need_retrieval=True,
                 print_response=print_response,
-                today=today
+                today=today,
+                history=history
             )
             timing['ttft'] = first_token_base + ttft_model
             timing['ttft_model'] = ttft_model
@@ -306,7 +321,8 @@ class HotelReviewRAG:
                      implied_boost: float = 0.5,
                      clear_boost: float = 0.5,
                      half_life_days: int = 180,
-                     today: datetime | None = TODAY):
+                     today: datetime | None = TODAY,
+                     history: dict | None = None):
         """
         流式处理用户查询（用于 FastAPI SSE 接口）
 
@@ -322,7 +338,7 @@ class HotelReviewRAG:
         query_processing_start = time.time()
 
         intent_recognition_start = time.time()
-        need_retrieval = self.intent_recognizer.recognize(user_query)
+        need_retrieval = self.intent_recognizer.recognize(user_query, history=history)
         timing['intent_recognition'] = time.time() - intent_recognition_start
 
         # 发送意图识别结果（前端据此控制"检索中"显示）
@@ -354,7 +370,7 @@ class HotelReviewRAG:
         # 直接回答（不需要检索）
         if not need_retrieval:
             for chunk in self.generator.generate_stream(
-                user_query, need_retrieval=False, today=today
+                user_query, need_retrieval=False, today=today, history=history
             ):
                 yield {"type": "chunk", "content": chunk}
 
@@ -443,7 +459,8 @@ class HotelReviewRAG:
             ranked_comments=ranked_comments,
             summaries=summaries,
             need_retrieval=True,
-            today=today
+            today=today,
+            history=history
         ):
             yield {"type": "chunk", "content": chunk}
 
