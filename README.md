@@ -38,7 +38,7 @@
                     │ SSE / REST
                     ▼
 ┌─────────────────────────────────────────┐
-│       Python FastAPI 服务 (Railway)      │
+│     Python FastAPI 服务 (Zeabur HK)      │
 │    查询处理 → 混合检索 → 重排 → 流式生成   │
 └────────┬──────────┬──────────┬──────────┘
          │          │          │
@@ -198,14 +198,16 @@ LLM 流式生成回答
 2. 配置环境变量（`NEXT_PUBLIC_*` 开头的变量）
 3. 自动部署
 
-### RAG 服务部署（Railway）
+### 后端 RAG 服务部署（Zeabur 香港节点）
 
-1. 在 [Railway](https://railway.app) 创建新项目
-2. 指定根目录为 `rag-service/`
+> 由于 RAG 服务需要调用阿里云 DashScope / DashVector API（中国大陆），需部署在对大陆网络通畅的节点。推荐使用 Zeabur 香港区域。
+
+1. 在 [Zeabur](https://zeabur.com) 创建新项目，选择 **Hong Kong** 区域
+2. 连接 GitHub 仓库，指定根目录为 `rag-service/`
 3. 配置环境变量（`DASHSCOPE_API_KEY`、`DASHVECTOR_*`、`NEXT_PUBLIC_INSFORGE_*`）
-4. Railway 会自动识别 `Procfile` 和 `runtime.txt` 进行部署
+4. Zeabur 会自动识别 `Procfile` 和 `runtime.txt` 进行部署
 
-部署后将 RAG 服务的公网地址填入 Vercel 的 `NEXT_PUBLIC_PYTHON_API_URL` 环境变量
+部署后将 RAG 服务的公网地址填入 Vercel 的 `NEXT_PUBLIC_PYTHON_API_URL` 环境变量，然后 Redeploy Vercel 项目
 
 ## API 接口
 
