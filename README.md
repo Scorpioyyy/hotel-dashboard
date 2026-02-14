@@ -56,10 +56,10 @@ npm install
 
 #### 1. 配置 Next.js 应用
 
-复制 `env.example` 为 `.env` 并填入你的 Insforge 配置：
+复制 `.env.example` 为 `.env` 并填入你的 Insforge 配置：
 
 ```bash
-cp env.example .env
+cp .env.example .env
 ```
 
 然后编辑 `.env`，将 `your-insforge-url-here` 和 `your_insforge_anon_key_here` 替换为你的真实值
