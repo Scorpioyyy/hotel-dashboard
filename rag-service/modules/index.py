@@ -1,10 +1,10 @@
 """基于 BM25 的倒排索引"""
 
 import re
-import pickle
+import math
 import nltk
 import jieba
-import numpy as np
+import pickle
 from pathlib import Path
 from collections import Counter
 
@@ -106,7 +106,7 @@ class InvertedIndex:
         for term in query_tokens:
             if term in self.index:
                 df = len(self.index[term])
-                idf[term] = max(0, (self.num_docs - df + 0.5) / (df + 0.5) + 1)
+                idf[term] = math.log((self.num_docs - df + 0.5) / (df + 0.5) + 1.0)
 
         # 计算 BM25 分数
         scores = {}

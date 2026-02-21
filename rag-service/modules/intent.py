@@ -113,7 +113,7 @@ class IntentDetector:
                 return data
             except Exception as e:
                 print(f"意图检测第 {i+1} 次尝试失败: {e}")
-                if i < 2:
+                if i < 1:
                     time.sleep(0.1)
                     continue
 
@@ -189,7 +189,7 @@ class IntentExpander:
                     raise TypeError(f"queries 数据类型错误: 期望 list, 实际为 {type(queries).__name__}")
             except Exception as e:
                 print(f"意图扩展第 {i+1} 次尝试失败: {e}")
-                if i < 2:
+                if i < 1:
                     time.sleep(0.1)
                     continue
 
@@ -249,7 +249,7 @@ class HyDEGenerator:
                     raise TypeError(f"responses 数据类型错误: 期望 list, 实际为 {type(responses).__name__}")
             except Exception as e:
                 print(f"假设性回复生成第 {i+1} 次尝试失败: {e}")
-                if i < 2:
+                if i < 1:
                     time.sleep(0.1)
                     continue
 

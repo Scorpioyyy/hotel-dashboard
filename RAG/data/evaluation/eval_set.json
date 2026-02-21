@@ -1,0 +1,862 @@
+[
+  {
+    "question_id": 1,
+    "question_type": "structured",
+    "question": "我家小孩才三岁，想知道房间里有没有什么不安全的设计，比如尖角家具或者没有防护的落地窗之类的。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "房间设施"
+    }
+  },
+  {
+    "question_id": 2,
+    "question_type": "structured",
+    "question": "如果碰上下雨天出不了门，小孩在酒店里能待得住吗，有没有室内能消磨时间的地方。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "公共设施"
+    }
+  },
+  {
+    "question_id": 3,
+    "question_type": "structured",
+    "question": "我家小孩比较挑食而且对海鲜过敏，早餐能找到合适吃的东西吗。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "餐饮设施"
+    }
+  },
+  {
+    "question_id": 4,
+    "question_type": "structured",
+    "question": "飞机可能晚点到比较晚，怕小孩在大堂闹，入住手续能提前处理好吗。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "前台服务"
+    }
+  },
+  {
+    "question_id": 5,
+    "question_type": "structured",
+    "question": "小孩晚上容易踢被子着凉，能找前台多要一床薄被或者毛毯吗。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "客房服务"
+    }
+  },
+  {
+    "question_id": 6,
+    "question_type": "structured",
+    "question": "带着老人小孩拖着行李最怕在大堂干等，高峰期入住排队一般要多久。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "退房/入住效率"
+    }
+  },
+  {
+    "question_id": 7,
+    "question_type": "structured",
+    "question": "我们从广州南站出发，带着婴儿车和一堆行李过去方不方便。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "交通便利性"
+    }
+  },
+  {
+    "question_id": 8,
+    "question_type": "structured",
+    "question": "酒店附近有药店或者24小时便利店吗，怕晚上小孩突然发烧需要买东西。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "周边配套"
+    }
+  },
+  {
+    "question_id": 9,
+    "question_type": "structured",
+    "question": "想给孩子订个能看到花园绿化的房间，别对着马路那种太吵了不好哄睡。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "景观/朝向"
+    }
+  },
+  {
+    "question_id": 10,
+    "question_type": "structured",
+    "question": "看了一下价格不便宜，带娃住这里跟长隆附近的亲子酒店比划得来吗。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "价格合理性"
+    }
+  },
+  {
+    "question_id": 11,
+    "question_type": "structured",
+    "question": "含早的套餐小孩要另外收费吗，加上乐园门票之类的总花费大概什么水平。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "性价比"
+    }
+  },
+  {
+    "question_id": 12,
+    "question_type": "structured",
+    "question": "之前带娃住别的酒店踩了不少坑，想听听真实带小孩入住过的人怎么评价。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "整体满意度"
+    }
+  },
+  {
+    "question_id": 13,
+    "question_type": "structured",
+    "question": "小孩九点就要睡了，走廊来回走动的人多不多，隔壁的动静会影响到吗。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "安静程度"
+    }
+  },
+  {
+    "question_id": 14,
+    "question_type": "structured",
+    "question": "宝宝喜欢在房间地上爬来爬去，地毯和卫生间角落的卫生情况能放心吗。",
+    "metadata": {
+      "persona": "家庭亲子",
+      "intent_direction": "卫生状况"
+    }
+  },
+  {
+    "question_id": 15,
+    "question_type": "structured",
+    "question": "经常要在房间里开视频会议，网速和桌面空间能满足一整天的办公需求吗。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "房间设施"
+    }
+  },
+  {
+    "question_id": 16,
+    "question_type": "structured",
+    "question": "下周要在广州接待重要客户，酒店里有没有比较体面的会谈或洽谈空间。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "公共设施"
+    }
+  },
+  {
+    "question_id": 17,
+    "question_type": "structured",
+    "question": "一般早上赶着出门开会，早餐能不能快速吃完走人，别是那种等很久上菜的。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "餐饮设施"
+    }
+  },
+  {
+    "question_id": 18,
+    "question_type": "structured",
+    "question": "飞机可能晚点到凌晨一两点，那个时间入住会不会有问题。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "前台服务"
+    }
+  },
+  {
+    "question_id": 19,
+    "question_type": "structured",
+    "question": "衬衫在箱子里皱了需要熨烫，酒店能帮忙处理吗，大概多久能弄好。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "客房服务"
+    }
+  },
+  {
+    "question_id": 20,
+    "question_type": "structured",
+    "question": "最后一天要赶早班飞机，六点多退房能办吗，流程麻不麻烦。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "退房/入住效率"
+    }
+  },
+  {
+    "question_id": 21,
+    "question_type": "structured",
+    "question": "我平时要跑琶洲展馆和珠江新城两头，从酒店过去通勤方不方便。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "交通便利性"
+    }
+  },
+  {
+    "question_id": 22,
+    "question_type": "structured",
+    "question": "晚上应酬完回来可能比较晚了，周边深夜的治安和配套情况怎么样。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "周边配套"
+    }
+  },
+  {
+    "question_id": 23,
+    "question_type": "structured",
+    "question": "高楼层的房间看出去是什么景，能拍出比较体面的照片发朋友圈吗。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "景观/朝向"
+    }
+  },
+  {
+    "question_id": 24,
+    "question_type": "structured",
+    "question": "公司差旅标准800一晚，这个预算能住到什么水平的房间。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "价格合理性"
+    }
+  },
+  {
+    "question_id": 25,
+    "question_type": "structured",
+    "question": "行政楼层的酒廊权益值不值得加钱升级，跟普通楼层差别大吗。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "性价比"
+    }
+  },
+  {
+    "question_id": 26,
+    "question_type": "structured",
+    "question": "经常出差住各种五星酒店，这家在广州的五星里大概算什么水平。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "整体满意度"
+    }
+  },
+  {
+    "question_id": 27,
+    "question_type": "structured",
+    "question": "第二天有重要提案需要早起准备，住这里晚上能保证睡眠质量吗。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "安静程度"
+    }
+  },
+  {
+    "question_id": 28,
+    "question_type": "structured",
+    "question": "知道是开了很多年的老酒店了，房间会不会有那种老房子的潮湿霉味。",
+    "metadata": {
+      "persona": "商务出差",
+      "intent_direction": "卫生状况"
+    }
+  },
+  {
+    "question_id": 29,
+    "question_type": "structured",
+    "question": "三个女生一起住，就一个卫生间的话早上洗漱会不会互相等很久。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "房间设施"
+    }
+  },
+  {
+    "question_id": 30,
+    "question_type": "structured",
+    "question": "泳池拍照出片吗，值不值得专门带泳衣过去。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "公共设施"
+    }
+  },
+  {
+    "question_id": 31,
+    "question_type": "structured",
+    "question": "我们几个想在酒店里吃顿好的庆祝一下，有什么值得推荐的餐厅吗。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "餐饮设施"
+    }
+  },
+  {
+    "question_id": 32,
+    "question_type": "structured",
+    "question": "我们几个是分开到的，先到的人办完入住之后后面来的能直接拿房卡上去吗。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "前台服务"
+    }
+  },
+  {
+    "question_id": 33,
+    "question_type": "structured",
+    "question": "在外面玩了一天回来想叫个夜宵送到房间里，有客房送餐服务吗。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "客房服务"
+    }
+  },
+  {
+    "question_id": 34,
+    "question_type": "structured",
+    "question": "最后一天想把行李先寄存在酒店，退了房再出去逛半天回来拿，可以吗。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "退房/入住效率"
+    }
+  },
+  {
+    "question_id": 35,
+    "question_type": "structured",
+    "question": "我们打算去北京路、沙面、还有珠江夜游，从酒店出发去这几个地方方便吗。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "交通便利性"
+    }
+  },
+  {
+    "question_id": 36,
+    "question_type": "structured",
+    "question": "晚上想出去找个酒吧坐坐或者吃个宵夜，附近选择多不多。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "周边配套"
+    }
+  },
+  {
+    "question_id": 37,
+    "question_type": "structured",
+    "question": "想订一间能看到广州塔或者珠江夜景的房间，有可能实现吗。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "景观/朝向"
+    }
+  },
+  {
+    "question_id": 38,
+    "question_type": "structured",
+    "question": "五一假期价格涨得厉害吗，跟平时比差多少。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "价格合理性"
+    }
+  },
+  {
+    "question_id": 39,
+    "question_type": "structured",
+    "question": "小红书上有人推荐买套餐券比直接订房划算，是真的吗。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "性价比"
+    }
+  },
+  {
+    "question_id": 40,
+    "question_type": "structured",
+    "question": "我们几个选酒店主要看颜值和拍照效果，这家公区和房间上不上镜。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "整体满意度"
+    }
+  },
+  {
+    "question_id": 41,
+    "question_type": "structured",
+    "question": "我们几个晚上可能会聊天比较吵，隔音够不够好不会影响到隔壁吧。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "安静程度"
+    }
+  },
+  {
+    "question_id": 42,
+    "question_type": "structured",
+    "question": "有些老酒店浴室排水特别慢还会反味，这家有这种问题吗。",
+    "metadata": {
+      "persona": "朋友出游",
+      "intent_direction": "卫生状况"
+    }
+  },
+  {
+    "question_id": 43,
+    "question_type": "structured",
+    "question": "有没有带浴缸可以泡澡的房型，想找个有点情调的住一晚。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "房间设施"
+    }
+  },
+  {
+    "question_id": 44,
+    "question_type": "structured",
+    "question": "酒店的花园适合晚上散步吗，灯光和氛围感怎么样。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "公共设施"
+    }
+  },
+  {
+    "question_id": 45,
+    "question_type": "structured",
+    "question": "男朋友过生日想在酒店安排一顿浪漫的晚餐，有合适的餐厅推荐吗。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "餐饮设施"
+    }
+  },
+  {
+    "question_id": 46,
+    "question_type": "structured",
+    "question": "想提前跟酒店说帮忙在房间布置一下生日惊喜，他们会愿意配合吗。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "前台服务"
+    }
+  },
+  {
+    "question_id": 47,
+    "question_type": "structured",
+    "question": "能不能让酒店提前把蛋糕和鲜花放到房间里，具体怎么操作。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "客房服务"
+    }
+  },
+  {
+    "question_id": 48,
+    "question_type": "structured",
+    "question": "想在酒店多待一会儿不想那么赶，延迟退房好申请吗。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "退房/入住效率"
+    }
+  },
+  {
+    "question_id": 49,
+    "question_type": "structured",
+    "question": "晚上想去珠江边走走看夜景，从酒店步行过去远不远。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "交通便利性"
+    }
+  },
+  {
+    "question_id": 50,
+    "question_type": "structured",
+    "question": "周边有没有那种适合两个人逛的文艺小街或者特色小店。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "周边配套"
+    }
+  },
+  {
+    "question_id": 51,
+    "question_type": "structured",
+    "question": "想要晚上躺在床上就能看城市夜景的那种房间，哪个房型能实现。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "景观/朝向"
+    }
+  },
+  {
+    "question_id": 52,
+    "question_type": "structured",
+    "question": "纪念日想住好一点但预算有限，一千出头能住到比较满意的房型吗。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "价格合理性"
+    }
+  },
+  {
+    "question_id": 53,
+    "question_type": "structured",
+    "question": "看到有含双人晚餐的套票，里面的餐值那个价吗，会不会不如单独出去吃。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "性价比"
+    }
+  },
+  {
+    "question_id": 54,
+    "question_type": "structured",
+    "question": "想营造一个特别的纪念日回忆，这家酒店整体的氛围和格调适合吗。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "整体满意度"
+    }
+  },
+  {
+    "question_id": 55,
+    "question_type": "structured",
+    "question": "就想安安静静待两天，走廊拖行李箱、隔壁电视声这类噪音明显吗。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "安静程度"
+    }
+  },
+  {
+    "question_id": 56,
+    "question_type": "structured",
+    "question": "对床品比较在意，被子枕头有没有发黄或者闷闷的味道。",
+    "metadata": {
+      "persona": "情侣出游",
+      "intent_direction": "卫生状况"
+    }
+  },
+  {
+    "question_id": 57,
+    "question_type": "structured",
+    "question": "一个人住最怕安全问题，房间的门锁和楼层门禁这些靠谱吗。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "房间设施"
+    }
+  },
+  {
+    "question_id": 58,
+    "question_type": "structured",
+    "question": "下午没事想找个地方喝咖啡看看书，酒店有那种安静又舒服的公共空间吗。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "公共设施"
+    }
+  },
+  {
+    "question_id": 59,
+    "question_type": "structured",
+    "question": "一个人去吃自助早餐会不会有点尴尬，氛围和用餐环境大概是什么样的。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "餐饮设施"
+    }
+  },
+  {
+    "question_id": 60,
+    "question_type": "structured",
+    "question": "第一次来广州不太认路，前台能帮忙推荐路线或者叫车吗。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "前台服务"
+    }
+  },
+  {
+    "question_id": 61,
+    "question_type": "structured",
+    "question": "广州天气潮，出去逛一天衣服湿透了，房间有地方晾或者能快速烘干吗。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "客房服务"
+    }
+  },
+  {
+    "question_id": 62,
+    "question_type": "structured",
+    "question": "赶飞机时间紧，有没有快速退房的方式不用去前台排队。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "退房/入住效率"
+    }
+  },
+  {
+    "question_id": 63,
+    "question_type": "structured",
+    "question": "一个人拖着行李从白云机场到酒店，最省心的交通方式是什么。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "交通便利性"
+    }
+  },
+  {
+    "question_id": 64,
+    "question_type": "structured",
+    "question": "想自己随便逛逛感受老广州的生活气息，附近有没有本地人爱去的老街巷或市场。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "周边配套"
+    }
+  },
+  {
+    "question_id": 65,
+    "question_type": "structured",
+    "question": "一个人旅行喜欢在窗边发呆看风景，哪种房型视野最开阔。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "景观/朝向"
+    }
+  },
+  {
+    "question_id": 66,
+    "question_type": "structured",
+    "question": "一个人住五星总觉得有点奢侈，这家跟广州其他同档次酒店比贵不贵。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "价格合理性"
+    }
+  },
+  {
+    "question_id": 67,
+    "question_type": "structured",
+    "question": "听说在不同平台订价格差挺多，一般怎么订最划算。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "性价比"
+    }
+  },
+  {
+    "question_id": 68,
+    "question_type": "structured",
+    "question": "住过不少酒店了眼光比较挑，这家有没有什么让人印象深刻的亮点。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "整体满意度"
+    }
+  },
+  {
+    "question_id": 69,
+    "question_type": "structured",
+    "question": "我睡眠很浅，空调外机、电梯运行、走廊脚步声这些能隔得住吗。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "安静程度"
+    }
+  },
+  {
+    "question_id": 70,
+    "question_type": "structured",
+    "question": "有点洁癖，特别在意马桶和淋浴间的细节卫生，这方面做得到位吗。",
+    "metadata": {
+      "persona": "独自旅行",
+      "intent_direction": "卫生状况"
+    }
+  },
+  {
+    "question_id": 71,
+    "question_type": "ambiguous",
+    "question": "在纠结这家和白天鹅，能说说这家有什么独特的优势吗。",
+    "metadata": {}
+  },
+  {
+    "question_id": 72,
+    "question_type": "ambiguous",
+    "question": "婆婆第一次来广州想让她住好一点，但又怕她觉得太贵浪费钱。",
+    "metadata": {}
+  },
+  {
+    "question_id": 73,
+    "question_type": "ambiguous",
+    "question": "看评论有人说特别好有人说很差，到底真实情况是什么样的。",
+    "metadata": {}
+  },
+  {
+    "question_id": 74,
+    "question_type": "ambiguous",
+    "question": "我们对住的要求挺高的，这家能不能撑得住场面、不丢面子。",
+    "metadata": {}
+  },
+  {
+    "question_id": 75,
+    "question_type": "ambiguous",
+    "question": "打算在广州住三晚，中间想挑一晚住好点犒劳自己，选这里合适吗。",
+    "metadata": {}
+  },
+  {
+    "question_id": 76,
+    "question_type": "ambiguous",
+    "question": "都说是老牌五星，跟那些新开的设计师酒店或者网红酒店比到底怎么样。",
+    "metadata": {}
+  },
+  {
+    "question_id": 77,
+    "question_type": "ambiguous",
+    "question": "同事推荐的但没说具体好在哪里，能帮我总结一下到底值不值得住。",
+    "metadata": {}
+  },
+  {
+    "question_id": 78,
+    "question_type": "ambiguous",
+    "question": "下个月去广州出差还想顺便带家人玩两天，这家能同时兼顾商务和休闲吗。",
+    "metadata": {}
+  },
+  {
+    "question_id": 79,
+    "question_type": "ambiguous",
+    "question": "预算不太在意，就想住得舒心省事不踩雷，这家靠谱吗。",
+    "metadata": {}
+  },
+  {
+    "question_id": 80,
+    "question_type": "ambiguous",
+    "question": "老公想住那种潮一点的设计酒店，我比较喜欢经典老牌的，这家能说服他吗。",
+    "metadata": {}
+  },
+  {
+    "question_id": 81,
+    "question_type": "temporal_clear",
+    "question": "去年底看到有人说酒店在装修噪音很大，现在还在施工吗。",
+    "metadata": {
+      "time_sensitivity": "clear"
+    }
+  },
+  {
+    "question_id": 82,
+    "question_type": "temporal_clear",
+    "question": "之前有评论说早餐品质下降了不如以前，最近去的人觉得有改善吗。",
+    "metadata": {
+      "time_sensitivity": "clear"
+    }
+  },
+  {
+    "question_id": 83,
+    "question_type": "temporal_clear",
+    "question": "看到2024年初有人吐槽空调老化制冷不行，现在设备更新过了吗。",
+    "metadata": {
+      "time_sensitivity": "clear"
+    }
+  },
+  {
+    "question_id": 84,
+    "question_type": "temporal_clear",
+    "question": "上个月朋友住完说前台服务态度比较敷衍，最近有没有改进。",
+    "metadata": {
+      "time_sensitivity": "clear"
+    }
+  },
+  {
+    "question_id": 85,
+    "question_type": "temporal_clear",
+    "question": "看到有评论说去年翻新了部分楼层，现在所有房间都翻新完了吗。",
+    "metadata": {
+      "time_sensitivity": "clear"
+    }
+  },
+  {
+    "question_id": 86,
+    "question_type": "temporal_implied",
+    "question": "听说之前泳池封了维修过一段时间，去了到底能不能游泳。",
+    "metadata": {
+      "time_sensitivity": "implied"
+    }
+  },
+  {
+    "question_id": 87,
+    "question_type": "temporal_implied",
+    "question": "朋友两年前住过说设施蛮旧的，不知道现在情况是不是还一样。",
+    "metadata": {
+      "time_sensitivity": "implied"
+    }
+  },
+  {
+    "question_id": 88,
+    "question_type": "temporal_implied",
+    "question": "之前好像行政酒廊因为什么原因暂停开放了，去了能正常使用吗。",
+    "metadata": {
+      "time_sensitivity": "implied"
+    }
+  },
+  {
+    "question_id": 89,
+    "question_type": "temporal_implied",
+    "question": "早期评论对隔音差评特别多，后面有做过隔音方面的整改吗。",
+    "metadata": {
+      "time_sensitivity": "implied"
+    }
+  },
+  {
+    "question_id": 90,
+    "question_type": "temporal_implied",
+    "question": "有评论说荔湾亭以前菜品很好但后来换了厨师水准下滑了，现在去会不会失望。",
+    "metadata": {
+      "time_sensitivity": "implied"
+    }
+  },
+  {
+    "question_id": 91,
+    "question_type": "room_type_fuzzy",
+    "question": "双床房的窗户朝向如何？",
+    "metadata": {
+      "room_type": "双床房",
+      "room_type_category": "fuzzy"
+    }
+  },
+  {
+    "question_id": 92,
+    "question_type": "room_type_fuzzy",
+    "question": "大床房的床垫软硬如何？",
+    "metadata": {
+      "room_type": "大床房",
+      "room_type_category": "fuzzy"
+    }
+  },
+  {
+    "question_id": 93,
+    "question_type": "room_type_fuzzy",
+    "question": "套房有独立的会客区吗？",
+    "metadata": {
+      "room_type": "套房",
+      "room_type_category": "fuzzy"
+    }
+  },
+  {
+    "question_id": 94,
+    "question_type": "room_type_fuzzy",
+    "question": "主题房有什么特色布置？",
+    "metadata": {
+      "room_type": "主题房",
+      "room_type_category": "fuzzy"
+    }
+  },
+  {
+    "question_id": 95,
+    "question_type": "room_type_exact",
+    "question": "花园双床房可以加床吗？",
+    "metadata": {
+      "room_type": "花园双床房",
+      "room_type_category": "exact"
+    }
+  },
+  {
+    "question_id": 96,
+    "question_type": "room_type_exact",
+    "question": "花园大床房的卫生间有浴缸吗？",
+    "metadata": {
+      "room_type": "花园大床房",
+      "room_type_category": "exact"
+    }
+  },
+  {
+    "question_id": 97,
+    "question_type": "room_type_exact",
+    "question": "红棉双床套房有客厅和卧室吗？",
+    "metadata": {
+      "room_type": "红棉双床套房",
+      "room_type_category": "exact"
+    }
+  },
+  {
+    "question_id": 98,
+    "question_type": "room_type_exact",
+    "question": "红棉大床套房有独立的会客区域吗？",
+    "metadata": {
+      "room_type": "红棉大床套房",
+      "room_type_category": "exact"
+    }
+  },
+  {
+    "question_id": 99,
+    "question_type": "room_type_exact",
+    "question": "城央绿意双床房能看到花园景观吗？",
+    "metadata": {
+      "room_type": "城央绿意双床房",
+      "room_type_category": "exact"
+    }
+  },
+  {
+    "question_id": 100,
+    "question_type": "room_type_exact",
+    "question": "城央绿意大床房的窗外绿化景观好吗？",
+    "metadata": {
+      "room_type": "城央绿意大床房",
+      "room_type_category": "exact"
+    }
+  }
+]
