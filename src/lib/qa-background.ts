@@ -246,9 +246,9 @@ export function startBackgroundStream(
             isComplete: false,
             loadingText: undefined
           });
-          // 第一个 chunk 到来时切换为流式输出状态
+          // 第一个 chunk 到来时切换为流式输出状态（同时携带 references 供引用标记渲染）
           const messages = updateAssistantMessage({
-            content: fullContent, loading: false, loadingText: undefined, streaming: true
+            content: fullContent, loading: false, loadingText: undefined, streaming: true, references
           });
           onUpdate?.(messages, false);
 

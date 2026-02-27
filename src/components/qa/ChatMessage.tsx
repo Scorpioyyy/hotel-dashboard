@@ -1,12 +1,14 @@
 // components/qa/ChatMessage.tsx - 聊天消息组件
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Markdown from 'react-markdown';
 import { Comment } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
 import { StarRating } from '@/components/ui';
+import { preprocessCitations, validateRefs } from '@/lib/citation-parser';
+import { CitationBadge } from './CitationBadge';
 
 interface Props {
   role: 'user' | 'assistant';
@@ -17,6 +19,7 @@ interface Props {
   streaming?: boolean;
   referencesAnchorRef?: React.RefObject<HTMLParagraphElement | null>;
   skipReferencesDelay?: boolean; // 跳过参考评论延迟显示（用于历史记录恢复）
+  messageId?: string; // 消息唯一标识，用于引用卡片 id 去重
 }
 
 interface GalleryState {
@@ -30,33 +33,33 @@ const DEFAULT_VISIBLE_COUNT = 3;
 // 参考评论内容延迟显示时间（毫秒）
 const REFERENCES_CONTENT_DELAY = 500;
 
-export function ChatMessage({ role, content, references, loading, loadingText, streaming, referencesAnchorRef, skipReferencesDelay }: Props) {
+export function ChatMessage({ role, content, references, loading, loadingText, streaming, referencesAnchorRef, skipReferencesDelay, messageId }: Props) {
   const isUser = role === 'user';
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [gallery, setGallery] = useState<GalleryState | null>(null);
   const [showAllReferences, setShowAllReferences] = useState(false);
+  const [highlightedRef, setHighlightedRef] = useState<number | null>(null);
   // 如果跳过延迟，初始就显示；否则初始隐藏
   const [showReferencesContent, setShowReferencesContent] = useState(skipReferencesDelay || false);
-  const [lastReferencesLength, setLastReferencesLength] = useState(skipReferencesDelay ? (references?.length || 0) : 0);
+  const wasStreamingRef = useRef(false);
 
-  // 当 references 首次出现或数量变化时，延迟显示内容（跳过延迟时不执行）
+  // 跟踪 streaming 状态；当 streaming 从 true→false 时触发延迟显示
   useEffect(() => {
     if (skipReferencesDelay) return;
 
-    const currentLength = references?.length || 0;
-
-    // 如果 references 刚出现（从无到有）
-    if (currentLength > 0 && lastReferencesLength === 0) {
+    if (streaming) {
+      // 进入流式状态，标记并隐藏评论内容
+      wasStreamingRef.current = true;
       setShowReferencesContent(false);
+    } else if (wasStreamingRef.current && references && references.length > 0) {
+      // 流式结束，有参考评论 → 延迟显示
+      wasStreamingRef.current = false;
       const timer = setTimeout(() => {
         setShowReferencesContent(true);
       }, REFERENCES_CONTENT_DELAY);
       return () => clearTimeout(timer);
     }
-
-    // 更新记录的长度
-    setLastReferencesLength(currentLength);
-  }, [references?.length, lastReferencesLength, skipReferencesDelay]);
+  }, [streaming, references?.length, skipReferencesDelay]);
 
   // 计算可见和折叠的评论
   const totalReferences = references?.length || 0;
@@ -77,6 +80,25 @@ export function ChatMessage({ role, content, references, loading, loadingText, s
       return newSet;
     });
   };
+
+  // 点击引用徽章：滚动到对应评论卡片并高亮
+  const refIdPrefix = messageId ? `ref-comment-${messageId}` : 'ref-comment';
+  const handleCitationClick = useCallback((refNum: number) => {
+    // 若目标评论被折叠，先展开
+    if (refNum > DEFAULT_VISIBLE_COUNT && !showAllReferences) {
+      setShowAllReferences(true);
+      // 等 DOM 更新后再滚动
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`${refIdPrefix}-${refNum}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    } else {
+      const el = document.getElementById(`${refIdPrefix}-${refNum}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    setHighlightedRef(refNum);
+    setTimeout(() => setHighlightedRef(null), 2000);
+  }, [showAllReferences, refIdPrefix]);
 
   // 打开图片画廊
   const openGallery = (commentId: string, images: string[], index: number) => {
@@ -166,9 +188,15 @@ export function ChatMessage({ role, content, references, loading, loadingText, s
                 const mainContent = content.replace(/<stopped>.*?<\/stopped>/, '').trimEnd();
                 const stoppedMessage = stoppedMatch ? stoppedMatch[1] : null;
 
+                // 预处理引用标记：[[ref:N]] → `@@cite:N@@`
+                const processedContent = mainContent
+                  ? preprocessCitations(mainContent, !!streaming)
+                  : '';
+                const referenceCount = references?.length || 0;
+
                 return (
                   <>
-                    {mainContent && (
+                    {processedContent && (
                       <Markdown
                         components={{
                           // 自定义样式
@@ -185,9 +213,22 @@ export function ChatMessage({ role, content, references, loading, loadingText, s
                               {children}
                             </blockquote>
                           ),
+                          // 拦截 inline code：引用占位符渲染为 CitationBadge
+                          code: ({ children }) => {
+                            const text = String(children);
+                            const citeMatch = text.match(/^@@cite:([\d,]+)(:etc)?@@$/);
+                            if (citeMatch) {
+                              const refs = citeMatch[1].split(',').map(Number);
+                              const validRefs = validateRefs(refs, referenceCount);
+                              if (validRefs.length === 0) return null;
+                              const hasMore = !!citeMatch[2];
+                              return <CitationBadge refs={validRefs} onClickRef={handleCitationClick} disabled={!!streaming} hasMore={hasMore} />;
+                            }
+                            return <code className="bg-gray-100 px-1 rounded text-sm">{children}</code>;
+                          },
                         }}
                       >
-                        {mainContent}
+                        {processedContent}
                       </Markdown>
                     )}
                     {stoppedMessage && (
@@ -206,7 +247,7 @@ export function ChatMessage({ role, content, references, loading, loadingText, s
         </div>
 
         {/* 引用评论 */}
-        {references && references.length > 0 && !loading && (
+        {references && references.length > 0 && !loading && !streaming && (
           <div className="mt-3 space-y-2">
             <p ref={referencesAnchorRef} className="text-xs text-gray-500">参考了以下 {totalReferences} 条评论：</p>
             {showReferencesContent && (
@@ -216,7 +257,11 @@ export function ChatMessage({ role, content, references, loading, loadingText, s
                 return (
                   <div
                     key={ref._id}
-                    className="bg-gray-50 rounded-lg p-3 text-left border border-gray-100"
+                    id={`${refIdPrefix}-${idx + 1}`}
+                    className={cn(
+                      'bg-gray-50 rounded-lg p-3 text-left border border-gray-100 transition-all duration-300',
+                      highlightedRef === idx + 1 && 'ring-2 ring-blue-400 bg-blue-50/30'
+                    )}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2 flex-wrap">

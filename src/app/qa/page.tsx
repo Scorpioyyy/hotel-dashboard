@@ -230,7 +230,7 @@ export default function QAPage() {
               streaming: !activeStream.isComplete && !isLoading,
               loading: isLoading,
               loadingText: activeStream.loadingText,
-              references: activeStream.isComplete ? activeStream.references : msg.references
+              references: activeStream.references?.length ? activeStream.references : msg.references
             }
           : msg
       ));
@@ -451,6 +451,7 @@ export default function QAPage() {
                       streaming={msg.streaming}
                       referencesAnchorRef={isLastAssistant ? referencesAnchorRef : undefined}
                       skipReferencesDelay={!isLastAssistant || isInitialLoadRef.current}
+                      messageId={msg.id}
                     />
                   </div>
                 );
