@@ -4,6 +4,8 @@
 
 <video src="demo.mp4" controls width="100%"></video>
 
+https://github.com/user-attachments/assets/0fc18db8-5773-4de8-9205-00728fd4ce55
+
 ## 功能特性
 
 ### 评论浏览
