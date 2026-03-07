@@ -4,7 +4,7 @@
 
 <video src="demo.mp4" controls width="100%"></video>
 
-https://github.com/user-attachments/assets/0fc18db8-5773-4de8-9205-00728fd4ce55
+https://github.com/user-attachments/assets/9f38dbf3-a810-4bfe-9f47-acbba7021d3c
 
 ## 功能特性
 
