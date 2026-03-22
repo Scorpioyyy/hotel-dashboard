@@ -68,7 +68,7 @@ class ResponseGenerator:
 发布日期: {c['metadata']['publish_date']}
 评论文本: {c['comment']}
 点赞数: {c['metadata']['useful_count']}
-回复数: {c['metadata']['review_count']}
+评论数: {c['metadata']['review_count']}
 房型: {c['metadata']['room_type']}
 """
         else:

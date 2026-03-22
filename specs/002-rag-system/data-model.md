@@ -133,7 +133,7 @@ ChatRequest
     │   └── Summary: ChromaDB summaries_collection
     │   └── RRF Fusion → 候选评论列表
     │
-    ├─→ MultiFactorRanker: 重排 Top-10
+    ├─→ MultiFactorRanker: 排序 Top-10
     │   ├── Reranker: 相关性打分
     │   └── 多因子: 质量25% + 相关性40% + 时效性20% + ...
     │

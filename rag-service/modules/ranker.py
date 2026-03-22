@@ -1,4 +1,4 @@
-"""重排模块：Reranker + 多因子排序"""
+"""排序模块：Reranker + 线性加权"""
 
 import time
 import numpy as np

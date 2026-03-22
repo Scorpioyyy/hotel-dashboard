@@ -63,7 +63,7 @@ class HotelReviewRAG:
         else:
             self.df_comments = get_all_comments_from_insforge()
 
-        # 意图识别和重排始终使用北京端点（新加坡不可用）
+        # 意图识别和 Rerank 始终使用北京端点（新加坡不可用）
         self.intent_recognizer = IntentRecognizer(api_key=api_key)
         self.reranker = Reranker(api_key=api_key)
 
@@ -220,7 +220,7 @@ class HotelReviewRAG:
         )
         timing['retrieval'] = retrieval_timing
 
-        # 三、重排
+        # 三、排序
         if enable_ranking:
             ranker = MultiFactorRanker(
                 self.reranker,
@@ -408,7 +408,7 @@ class HotelReviewRAG:
         )
         timing['retrieval'] = retrieval_timing
 
-        # 三、重排
+        # 三、排序
         if enable_ranking:
             ranker = MultiFactorRanker(
                 self.reranker,

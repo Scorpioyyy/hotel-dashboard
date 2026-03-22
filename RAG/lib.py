@@ -549,7 +549,7 @@ class HybridRetriever:
                                 'score': 评分,
                                 'publish_date': 发布日期,
                                 'quality_score': 评论质量分,
-                                'review_count': 回复数,
+                                'review_count': 评论数,
                                 'useful_count': 点赞数,
                                 'room_type': 房型,
                                 'fuzzy_room_type': 模糊房型
@@ -947,7 +947,7 @@ class MultiFactorRanker:
         w_relevance: float = 0.40,   # 相关性权重
         w_quality: float = 0.25,     # 评论质量分权重
         w_length: float = 0.05,      # 评论长度权重
-        w_review: float = 0.05,      # 回复数权重
+        w_review: float = 0.05,      # 评论数权重
         w_useful: float = 0.05,      # 点赞数权重
         w_recency: float = 0.20,     # 时效性权重
         
@@ -1016,7 +1016,7 @@ class MultiFactorRanker:
         log_comment_len = np.log(comment_len + 1)
         norm_length = log_comment_len / 7.51       # 取值范围 (0, 1)
 
-        # (3) 回复数
+        # (3) 评论数
         review_count = np.array([c['metadata']['review_count'] for c in candidates])
         log_review_count = np.log(review_count + 1)
         norm_review = log_review_count / 6.32      # 取值范围 (0, 1)
@@ -1059,7 +1059,7 @@ class MultiFactorRanker:
         rerank_rank = np.empty_like(rerank_sorted_index)
         rerank_rank[rerank_sorted_index] = np.arange(1, len(relevance_score) + 1)
         
-        # 添加重排模块信息
+        # 添加排序模块信息
         for rank, idx in enumerate(sorted_index[:topk], 1):
             c = candidates[idx]
             result = {
@@ -1153,7 +1153,7 @@ class ResponseGenerator:
 发布日期: {c['metadata']['publish_date']}
 评论文本: {c['comment']}
 点赞数: {c['metadata']['useful_count']}
-回复数: {c['metadata']['review_count']}
+评论数: {c['metadata']['review_count']}
 房型: {c['metadata']['room_type']}
 """
             else:
@@ -1299,7 +1299,7 @@ class HotelReviewRAG:
         enable_hyde: bool = True,
         enable_summary: bool = True,
               
-        # 是否启用重排模块
+        # 是否启排序模块
         enable_ranking: bool = True,
 
         # 是否需要生成最终回复并打印流式输出
@@ -1329,10 +1329,10 @@ class HotelReviewRAG:
             user_query: 用户输入的查询
             route_topk: 每路召回数量
             retrieval_topk: 混合检索输出数量
-            ranking_topk: 重排后输出数量
+            ranking_topk: 排序后输出数量
             enable_expansion: 是否启用意图扩展器
             enable_bm25 等: 是否启用该路召回
-            enable_ranking: 是否启用重排模块
+            enable_ranking: 是否启用排序模块
             enable_generation: 是否需要生成最终回复
             print_response: 是否需要打印流式输出
             w_relevance 等: 排序权重
@@ -1358,7 +1358,7 @@ class HotelReviewRAG:
                     'intent_expansion': 意图扩展延迟,
                     'query_processing_total': 查询处理总延迟（不含 HyDE）,
                     'retrieval': 混合检索延迟详情,
-                    'ranking': 重排延迟,
+                    'ranking': 排序延迟,
                     'ttft': 首字延迟,
                     'ttft_model': 模型回复首字延迟,
                     'subsequent': 模型后续回复延迟,
@@ -1443,9 +1443,9 @@ class HotelReviewRAG:
         
         # 二、混合检索
         if enable_ranking:
-            final_topk_for_retrieval = retrieval_topk  # 启用重排时，混合检索输出 retrieval_topk 条，排序后输出 ranking_topk 条
+            final_topk_for_retrieval = retrieval_topk  # 启用排序时，混合检索输出 retrieval_topk 条，排序后输出 ranking_topk 条
         else:
-            final_topk_for_retrieval = ranking_topk    # 不启用重排时，混合检索直接输出 ranking_topk 条
+            final_topk_for_retrieval = ranking_topk    # 不启用排序时，混合检索直接输出 ranking_topk 条
         
         rewritten_queries = intent_expansion_result if intent_expansion_result else [{'query': user_query, 'weight': 1.0}]
         
@@ -1463,7 +1463,7 @@ class HotelReviewRAG:
         )
         timing['retrieval'] = retrieval_timing
         
-        # 三、重排
+        # 三、排序
         if enable_ranking:
             ranker = MultiFactorRanker(
                 self.reranker,
@@ -1487,7 +1487,7 @@ class HotelReviewRAG:
             )
             timing['ranking'] = ranking_timing
         
-        # 不启用重排
+        # 不启用排序
         else:
             ranked_comments = comments  # 直接使用混合检索结果
             timing['ranking'] = {'total': 0, 'rerank': 0, 'scoring': 0}
@@ -1533,7 +1533,7 @@ class HotelReviewRAG:
                 'metadata': c['metadata']
             }
             
-            # 如果启用了重排，添加重排相关信息
+            # 如果启用了排序，添加排序相关信息
             if enable_ranking:
                 comment_data['rerank_score'] = c['rerank_score']
                 comment_data['rerank_rank'] = c['rerank_rank']
@@ -1607,7 +1607,7 @@ def print_retrieval_results(results):
             print(f"  排名: #{comment['rrf_rank']:>2} | RRF 分数: {comment['rrf_score']:.4f}")
             print(f"  评论ID: {comment['comment_id']}")
             print(f"  房型: {comment['metadata']['room_type']}（{comment['metadata']['fuzzy_room_type']}）")
-            print(f"  评分: {comment['metadata']['score']:.1f} | 质量: {comment['metadata']['quality_score']} | 回复: {comment['metadata']['review_count']} | 点赞: {comment['metadata']['useful_count']} | 发布: {comment['metadata']['publish_date']}")
+            print(f"  评分: {comment['metadata']['score']:.1f} | 质量: {comment['metadata']['quality_score']} | 评论: {comment['metadata']['review_count']} | 点赞: {comment['metadata']['useful_count']} | 发布: {comment['metadata']['publish_date']}")
             print(f"  内容: {comment['comment']}")
             
             # 召回路由信息
@@ -1671,9 +1671,9 @@ def print_rag_result(result: dict):
     if timing.get('ranking'):
         rk = timing['ranking']
         if rk['total'] > 0:
-            print(f"  • 重排: {rk['total']:.3f}s（Rerank {rk['rerank']:.3f}s + 排序 {rk['scoring']:.3f}s）")
+            print(f"  • 排序: {rk['total']:.3f}s（Rerank {rk['rerank']:.3f}s + 排序 {rk['scoring']:.3f}s）")
         else:
-            print(f"  • 重排: 0.000s")
+            print(f"  • 排序: 0.000s")
 
     print(f"  • 模型回复: {timing['generation']:.3f}s")
     print(f"    • 首字延迟: {timing['ttft_model']:.3f}s")
@@ -1720,7 +1720,7 @@ def print_rag_result(result: dict):
         for comment in refs['comments']:
             print(f"  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
             
-            # 根据是否有重排信息显示不同内容
+            # 根据是否有排序信息显示不同内容
             if 'final_rank' in comment:
                 print(f"  综合排名: #{comment['final_rank']:>2} | 综合得分: {comment['final_score']:.4f}")
                 print(f"  检索排名: #{comment['rrf_rank']:>2} | 检索得分: {comment['rrf_score']:.4f} | Rerank排名: #{comment['rerank_rank']:>2} | Rerank得分: {comment['rerank_score']:.4f}")
@@ -1729,10 +1729,10 @@ def print_rag_result(result: dict):
             
             print(f"  评论ID: {comment['comment_id']}")
             print(f"  房型: {comment['metadata']['room_type']}（{comment['metadata']['fuzzy_room_type']}）")
-            print(f"  评分: {comment['metadata']['score']:.1f} | 质量: {comment['metadata']['quality_score']} | 回复: {comment['metadata']['review_count']} | 点赞: {comment['metadata']['useful_count']} | 发布: {comment['metadata']['publish_date']}")
+            print(f"  评分: {comment['metadata']['score']:.1f} | 质量: {comment['metadata']['quality_score']} | 评论: {comment['metadata']['review_count']} | 点赞: {comment['metadata']['useful_count']} | 发布: {comment['metadata']['publish_date']}")
             if 'final_rank' in comment:
                 feature = comment['feature_scores']
-                print(f"  排序: {comment['final_score']:.4f} = 0.4 * {feature['relevance']:.3f}（相关）+ 0.25 * {feature['quality']:.3f}（质量）+ 0.05 * {feature['log_comment_len']:.3f}（长度）+ 0.05 * {feature['log_review_count']:.3f}（回复）+ 0.05 * {feature['log_useful_count']:.3f}（点赞）+ 0.2 * {feature['recency']:.3f}（时效）")
+                print(f"  排序: {comment['final_score']:.4f} = 0.4 * {feature['relevance']:.3f}（相关）+ 0.25 * {feature['quality']:.3f}（质量）+ 0.05 * {feature['log_comment_len']:.3f}（长度）+ 0.05 * {feature['log_review_count']:.3f}（评论）+ 0.05 * {feature['log_useful_count']:.3f}（点赞）+ 0.2 * {feature['recency']:.3f}（时效）")
             print(f"  内容: {comment['comment']}")
             
             # 召回路由信息

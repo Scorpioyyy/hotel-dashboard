@@ -189,7 +189,7 @@ function CommentsPageContent() {
               <option value="score-asc">评分最低</option>
               <option value="quality_score-desc">质量最高</option>
               <option value="useful_count-desc">点赞最多</option>
-              <option value="review_count-desc">回复最多</option>
+              <option value="review_count-desc">评论最多</option>
             </select>
           </div>
 

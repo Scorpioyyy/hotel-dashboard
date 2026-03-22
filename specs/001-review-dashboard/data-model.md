@@ -50,7 +50,7 @@
 | `comment_len` | integer | NULL | 评论文本长度 |
 | `log_comment_len` | float | NULL | 对数评论文本长度 |
 | `log_useful_count` | float | NULL | 对数点赞数 |
-| `log_review_count` | float | NULL | 对数回复数 |
+| `log_review_count` | float | NULL | 对数评论数 |
 
 ### 索引设计
 

@@ -27,7 +27,7 @@
 |------|------|------|
 | I. 数据驱动设计 | PASS | RAG 系统基于真实评论数据检索和生成，从 Insforge 读取保证数据一致性 |
 | II. 用户体验优先 | PASS | 中文界面不变；问答响应 < 5秒（TTFT）满足要求；流式输出提供即时反馈 |
-| III. AI 回答可溯源 | PASS | RAG 系统核心优势：五路检索 + 重排确保相关性；Top-10 参考评论作为引用来源 |
+| III. AI 回答可溯源 | PASS | RAG 系统核心优势：五路检索 + 排序确保相关性；Top-10 参考评论作为引用来源 |
 | IV. 性能与可维护性 | PASS | 模块化拆分（8+2 模块，每个 < 300 行）；Python 使用类型提示；TypeScript 保持类型安全 |
 | V. 简洁实用 | PASS (justified) | 引入 FastAPI 是必要的（Python 无法在 Node.js 中运行）；复用已有 RAG 实现不过度工程化（见 Complexity Tracking） |
 

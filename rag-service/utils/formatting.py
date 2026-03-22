@@ -43,7 +43,7 @@ def print_retrieval_results(results):
             print(f"  排名: #{comment['rrf_rank']:>2} | RRF 分数: {comment['rrf_score']:.4f}")
             print(f"  评论ID: {comment['comment_id']}")
             print(f"  房型: {comment['metadata']['room_type']}（{comment['metadata']['fuzzy_room_type']}）")
-            print(f"  评分: {comment['metadata']['score']:.1f} | 质量: {comment['metadata']['quality_score']} | 回复: {comment['metadata']['review_count']} | 点赞: {comment['metadata']['useful_count']} | 发布: {comment['metadata']['publish_date']}")
+            print(f"  评分: {comment['metadata']['score']:.1f} | 质量: {comment['metadata']['quality_score']} | 评论: {comment['metadata']['review_count']} | 点赞: {comment['metadata']['useful_count']} | 发布: {comment['metadata']['publish_date']}")
             print(f"  内容: {comment['comment']}")
 
             print(f"  召回路由:")
@@ -100,9 +100,9 @@ def print_rag_result(result: dict):
     if timing.get('ranking'):
         rk = timing['ranking']
         if rk['total'] > 0:
-            print(f"  • 重排: {rk['total']:.3f}s（Rerank {rk['rerank']:.3f}s + 排序 {rk['scoring']:.3f}s）")
+            print(f"  • 排序: {rk['total']:.3f}s（Rerank {rk['rerank']:.3f}s + 排序 {rk['scoring']:.3f}s）")
         else:
-            print(f"  • 重排: 0.000s")
+            print(f"  • 排序: 0.000s")
 
     print(f"  • 模型回复: {timing['generation']:.3f}s")
     print(f"    • 首字延迟: {timing['ttft_model']:.3f}s")
@@ -157,10 +157,10 @@ def print_rag_result(result: dict):
 
             print(f"  评论ID: {comment['comment_id']}")
             print(f"  房型: {comment['metadata']['room_type']}（{comment['metadata']['fuzzy_room_type']}）")
-            print(f"  评分: {comment['metadata']['score']:.1f} | 质量: {comment['metadata']['quality_score']} | 回复: {comment['metadata']['review_count']} | 点赞: {comment['metadata']['useful_count']} | 发布: {comment['metadata']['publish_date']}")
+            print(f"  评分: {comment['metadata']['score']:.1f} | 质量: {comment['metadata']['quality_score']} | 评论: {comment['metadata']['review_count']} | 点赞: {comment['metadata']['useful_count']} | 发布: {comment['metadata']['publish_date']}")
             if 'final_rank' in comment:
                 feature = comment['feature_scores']
-                print(f"  排序: {comment['final_score']:.4f} = 0.4 * {feature['relevance']:.3f}（相关）+ 0.25 * {feature['quality']:.3f}（质量）+ 0.05 * {feature['log_comment_len']:.3f}（长度）+ 0.05 * {feature['log_review_count']:.3f}（回复）+ 0.05 * {feature['log_useful_count']:.3f}（点赞）+ 0.2 * {feature['recency']:.3f}（时效）")
+                print(f"  排序: {comment['final_score']:.4f} = 0.4 * {feature['relevance']:.3f}（相关）+ 0.25 * {feature['quality']:.3f}（质量）+ 0.05 * {feature['log_comment_len']:.3f}（长度）+ 0.05 * {feature['log_review_count']:.3f}（评论）+ 0.05 * {feature['log_useful_count']:.3f}（点赞）+ 0.2 * {feature['recency']:.3f}（时效）")
             print(f"  内容: {comment['comment']}")
 
             print(f"  召回路由:")
