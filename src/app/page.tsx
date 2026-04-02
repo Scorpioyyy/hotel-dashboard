@@ -211,7 +211,7 @@ function CommentsPageContent() {
             <>
               <div className="space-y-4 mb-8">
                 {comments.map((comment) => (
-                  <CommentCard key={comment._id} comment={comment} />
+                  <CommentCard key={comment._id} comment={comment} keyword={keyword} />
                 ))}
               </div>
 

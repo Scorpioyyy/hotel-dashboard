@@ -10,9 +10,23 @@ import { formatDate, cn } from '@/lib/utils';
 interface Props {
   comment: Comment;
   onClick?: () => void;
+  keyword?: string;
 }
 
-export function CommentCard({ comment, onClick }: Props) {
+function highlightText(text: string, keyword: string): React.ReactNode[] {
+  if (!keyword.trim()) return [text];
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  return parts.map((part, i) =>
+    i % 2 === 1 ? (
+      <mark key={i} className="bg-amber-200 text-amber-900 rounded-[2px] px-0.5 not-italic">
+        {part}
+      </mark>
+    ) : part
+  );
+}
+
+export function CommentCard({ comment, onClick, keyword = '' }: Props) {
   const [showFullText, setShowFullText] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -73,9 +87,10 @@ export function CommentCard({ comment, onClick }: Props) {
         {/* 评论内容 */}
         <div className="mb-3">
           <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-            {isLongText && !showFullText
-              ? comment.comment.slice(0, 200) + '...'
-              : comment.comment}
+            {highlightText(
+              isLongText && !showFullText ? comment.comment.slice(0, 200) + '...' : comment.comment,
+              keyword
+            )}
           </p>
           {isLongText && (
             <button
