@@ -10,12 +10,12 @@ import dashvector
 import chromadb
 
 from config import TODAY, EXACT_ROOM_TYPES, FUZZY_ROOM_TYPES
-from modules.clients import LLMClient, EmbeddingClient, IntlLLMClient, IntlEmbeddingClient
+from modules.clients import LLMClient, EmbeddingClient
 from modules.index import InvertedIndex
 from modules.intent import IntentRecognizer, IntentDetector, IntentExpander, HyDEGenerator
 from modules.retriever import HybridRetriever
 from modules.ranker import Reranker, MultiFactorRanker
-from modules.generator import ResponseGenerator, IntlResponseGenerator
+from modules.generator import ResponseGenerator
 from utils.database import get_all_comments_from_insforge
 
 
@@ -27,17 +27,17 @@ class HotelReviewRAG:
                  intl_api_key: str = None,
                  detection_model: str = "qwen-plus",
                  expansion_hyde_model: str = "qwen-flash",
-                 generation_model: str = "deepseek-v3.2"):
+                 generation_model: str = "qwen-plus"):
         """
         初始化 RAG 系统
 
         参数:
-            api_key: DashScope API Key（北京端点）
+            api_key: DashScope API Key（北京）
             dashvector_api_key: DashVector API Key
             dashvector_endpoint: DashVector 集合端点
             data_dir: 数据目录（包含 inverted_index.pkl 和 chroma_db/）
             df_comments: 评论 DataFrame（若为 None 则从 Insforge 数据库加载）
-            intl_api_key: DashScope 国际版 API Key（新加坡端点，为空则使用全北京模式）
+            intl_api_key: DashScope API Key（新加坡，可选；设置后所有模型调用切换至新加坡）
             detection_model: 意图检测模型
             expansion_hyde_model: 意图扩展/HyDE 模型
             generation_model: 回复生成模型
@@ -63,23 +63,15 @@ class HotelReviewRAG:
         else:
             self.df_comments = get_all_comments_from_insforge()
 
-        # 意图识别和 Rerank 始终使用北京端点（新加坡不可用）
-        self.intent_recognizer = IntentRecognizer(api_key=api_key)
-        self.reranker = Reranker(api_key=api_key)
+        # 确定 API Key
+        key = intl_api_key if intl_api_key else api_key
 
-        if intl_api_key:
-            # 国际混合模式：意图检测/扩展/Embedding/生成 使用新加坡端点
-            detection_client = IntlLLMClient(intl_api_key, model=detection_model, json=True)
-            expansion_hyde_client = IntlLLMClient(intl_api_key, model=expansion_hyde_model, json=True)
-            embedding_client = IntlEmbeddingClient(intl_api_key)
-            self.generator = IntlResponseGenerator(intl_api_key, model="qwen-plus-latest")
-        else:
-            # 全北京模式
-            detection_client = LLMClient(api_key=api_key, model=detection_model, json=True)
-            expansion_hyde_client = LLMClient(api_key=api_key, model=expansion_hyde_model, json=True)
-            embedding_client = EmbeddingClient(api_key=api_key)
-            self.generator = ResponseGenerator(api_key=api_key, model=generation_model)
+        # 初始化各组件
+        detection_client = LLMClient(key, model=detection_model, json=True)
+        expansion_hyde_client = LLMClient(key, model=expansion_hyde_model, json=True)
+        embedding_client = EmbeddingClient(key)
 
+        self.intent_recognizer = IntentRecognizer(key)
         self.intent_detector = IntentDetector(
             detection_client, EXACT_ROOM_TYPES, FUZZY_ROOM_TYPES
         )
@@ -90,6 +82,8 @@ class HotelReviewRAG:
             self.reverse_queries_collection, self.summaries_collection,
             embedding_client, self.df_comments, self.hyde_generator
         )
+        self.reranker = Reranker(key)
+        self.generator = ResponseGenerator(key, model=generation_model)
 
     def query(self, user_query: str,
               route_topk: int = 150,
@@ -135,7 +129,7 @@ class HotelReviewRAG:
         # 一、查询处理
         query_processing_start = time.time()
 
-        # 1. 意图识别（传入历史对话用于上下文理解）
+        # 1. 意图识别
         intent_recognition_start = time.time()
         need_retrieval = self.intent_recognizer.recognize(user_query)
         timing['intent_recognition'] = time.time() - intent_recognition_start

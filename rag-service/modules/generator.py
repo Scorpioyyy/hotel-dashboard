@@ -4,13 +4,11 @@ import time
 from datetime import datetime
 from dashscope import Generation
 
-from modules.clients import DASHSCOPE_INTL_BASE_URL
-
 
 class ResponseGenerator:
     """回复生成器：基于检索上下文生成最终回复"""
 
-    def __init__(self, api_key: str, model: str = "deepseek-v3.2"):
+    def __init__(self, api_key: str, model: str = "qwen-plus"):
         self.api_key = api_key
         self.model = model
 
@@ -19,7 +17,7 @@ class ResponseGenerator:
                       need_retrieval: bool = True, today: datetime | None = None,
                       history: dict | None = None) -> str:
         """构建生成 prompt"""
-        
+
         # 构建上一轮对话上下文
         history_context = ""
         if history and history.get("user") and history.get("assistant"):
@@ -86,7 +84,7 @@ class ResponseGenerator:
 """
             summaries_context += """
 注意：评论摘要是用来给到你更丰富的概览信息的，但用户只能看到【相关用户评论】的引用而看不到摘要的引用，因此在回复中你可以给出摘要中的模糊信息，\
-但**不得过于精确因为用户无法溯源**，也**不得告诉用户你引用了摘要**，**更不得将其当作评论引用输出“评论x”**。若摘要中的信息与用户问题无关，直接忽略即可，**不需要**做出任何额外说明。
+但**不得过于精确因为用户无法溯源**，也**不得告诉用户你引用了摘要**，**更不得将其当作评论引用输出"评论x"**。若摘要中的信息与用户问题无关，直接忽略即可，**不需要**做出任何额外说明。
 """
 
         return f"""
@@ -124,6 +122,18 @@ class ResponseGenerator:
 请给出你的回答：
 """
 
+    def _call_kwargs(self, prompt: str, temperature: float = 0.7) -> dict:
+        """构建 Generation.call() 的通用参数"""
+        return dict(
+            api_key=self.api_key,
+            model=self.model,
+            prompt=prompt,
+            temperature=temperature,
+            result_format="message",
+            stream=True,
+            incremental_output=True
+        )
+
     def generate(self, user_query: str, rewritten_queries=None, ranked_comments=None,
                  summaries=None, need_retrieval: bool = True, print_response: bool = True,
                  today: datetime | None = None, history: dict | None = None) -> tuple[str, float, float, float]:
@@ -137,15 +147,7 @@ class ResponseGenerator:
         prompt = self._build_prompt(user_query, rewritten_queries, ranked_comments,
                                     summaries, need_retrieval, today, history)
 
-        completion = Generation.call(
-            api_key=self.api_key,
-            model=self.model,
-            prompt=prompt,
-            temperature=0.7,
-            result_format="message",
-            stream=True,
-            incremental_output=True
-        )
+        completion = Generation.call(**self._call_kwargs(prompt))
 
         response_content = ""
         ttft_model = 0
@@ -187,15 +189,7 @@ class ResponseGenerator:
         prompt = self._build_prompt(user_query, rewritten_queries, ranked_comments,
                                     summaries, need_retrieval, today, history)
 
-        completion = Generation.call(
-            api_key=self.api_key,
-            model=self.model,
-            prompt=prompt,
-            temperature=0.7,
-            result_format="message",
-            stream=True,
-            incremental_output=True
-        )
+        completion = Generation.call(**self._call_kwargs(prompt))
 
         for chunk in completion:
             if chunk.status_code != 200:
@@ -204,72 +198,3 @@ class ResponseGenerator:
             message = chunk.output.choices[0].message
             if message.content:
                 yield message.content
-
-
-class IntlResponseGenerator(ResponseGenerator):
-    """国际版回复生成器（新加坡端点，OpenAI 兼容接口）
-
-    继承 ResponseGenerator 复用 _build_prompt()，重写生成方法使用 OpenAI SDK。
-    """
-
-    def __init__(self, api_key: str, model: str = "qwen-plus-latest"):
-        self.api_key = api_key
-        self.model = model
-        from openai import OpenAI
-        self.client = OpenAI(api_key=api_key, base_url=DASHSCOPE_INTL_BASE_URL)
-
-    def generate(self, user_query: str, rewritten_queries=None, ranked_comments=None,
-                 summaries=None, need_retrieval: bool = True, print_response: bool = True,
-                 today: datetime | None = None, history: dict | None = None) -> tuple[str, float, float, float]:
-        start_time = time.time()
-        prompt = self._build_prompt(user_query, rewritten_queries, ranked_comments,
-                                    summaries, need_retrieval, today, history)
-
-        stream = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-            stream=True,
-        )
-
-        response_content = ""
-        ttft_model = 0
-        subsequent_time = 0
-        first_token_time = 0
-
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                if not ttft_model:
-                    ttft_model = time.time() - start_time
-                    first_token_time = time.time()
-                if print_response:
-                    print(delta, end="", flush=True)
-                response_content += delta
-
-        if print_response and response_content:
-            print()
-
-        if ttft_model:
-            subsequent_time = time.time() - first_token_time
-
-        generation_time = time.time() - start_time
-        return response_content, ttft_model, subsequent_time, generation_time
-
-    def generate_stream(self, user_query: str, rewritten_queries=None, ranked_comments=None,
-                        summaries=None, need_retrieval: bool = True,
-                        today: datetime | None = None, history: dict | None = None):
-        prompt = self._build_prompt(user_query, rewritten_queries, ranked_comments,
-                                    summaries, need_retrieval, today, history)
-
-        stream = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-            stream=True,
-        )
-
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                yield delta

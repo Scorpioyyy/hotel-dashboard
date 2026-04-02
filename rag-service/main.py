@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 # 确保模块路径
 sys.path.insert(0, str(Path(__file__).parent))
 
-# 加载环境变量：优先本地 .env，回退到项目根目录 .env
+# 加载环境变量
 load_dotenv()
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -74,9 +74,15 @@ async def startup():
 
     try:
         from modules.rag_system import HotelReviewRAG
+        from modules.clients import DASHSCOPE_INTL_API_BASE
         data_dir = Path(__file__).parent / "data"
 
-        mode = "国际混合模式（新加坡+北京）" if intl_api_key else "全北京模式"
+        # 国际模式：全局切换 DashScope SDK 端点至新加坡
+        if intl_api_key:
+            import dashscope
+            dashscope.base_http_api_url = DASHSCOPE_INTL_API_BASE
+
+        mode = "新加坡" if intl_api_key else "北京"
         print(f"正在初始化 RAG 系统（{mode}）...")
         rag_system = HotelReviewRAG(
             api_key=api_key,

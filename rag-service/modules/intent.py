@@ -8,22 +8,19 @@ from dashscope import Generation
 class IntentRecognizer:
     """意图识别器：判断问题是否需要检索知识库"""
 
-    def __init__(self, api_key: str, model: str = "tongyi-intent-detect-v3"):
+    def __init__(self, api_key: str, model: str = "qwen-flash"):
         self.api_key = api_key
         self.model = model
 
-        self.intent_dict = {
-            "RETRIEVAL": "需要检索酒店评论知识库才能回答的问题（如询问酒店设施、服务、位置、价格等具体信息）",
-            "DIRECT": "可以直接回答的通用问题（如问候、闲聊、常识性问题等，不涉及酒店具体信息）"
-        }
-
-    def recognize(self, query: str) -> str:
+    def recognize(self, query: str, **kwargs) -> str:
         """识别用户意图，返回 True 表示需要检索"""
-        intent_string = json.dumps(self.intent_dict, ensure_ascii=False)
-        system_prompt = f"""You are Qwen, created by Alibaba Cloud. You are a helpful assistant.
-You should choose one tag from the tag list:
-{intent_string}
-Just reply with the chosen tag."""
+        system_prompt = """你是广州花园酒店的意图分类器。根据用户的问题，判断是否需要检索酒店评论知识库。
+
+分类规则：
+- RETRIEVAL：问题涉及酒店的设施、服务、房间、位置、餐饮、价格、体验等具体信息，需要检索评论才能回答
+- DIRECT：问候、闲聊、常识性问题等，不涉及该酒店的具体信息，可以直接回答
+
+只回复 RETRIEVAL 或 DIRECT，不要输出任何其他内容。"""
 
         messages = [
             {"role": "system", "content": system_prompt},
